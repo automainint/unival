@@ -2,4 +2,6 @@ Checks: >
   *,
   -llvmlibc-*,
   -fuchsia-*,
-  -*-uppercase-literal-suffix
+  -google-runtime-int,
+  -*-uppercase-literal-suffix,
+  -*-braces-around-statements
