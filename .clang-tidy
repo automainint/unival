@@ -1,2 +1,5 @@
 Checks: >
-  *
+  *,
+  -llvmlibc-*,
+  -fuchsia-*,
+  -*-uppercase-literal-suffix
