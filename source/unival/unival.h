@@ -8,9 +8,11 @@
  *  the MIT License for more details.
  */
 
-#define CATCH_CONFIG_RUNNER
-#include <catch2/catch.hpp>
+#ifndef UNIVAL_UNIVAL_H
+#define UNIVAL_UNIVAL_H
 
-auto main(int argc, char **argv) -> int {
-  return Catch::Session().run(argc, argv);
+namespace unival {
+  class unival {};
 }
+
+#endif

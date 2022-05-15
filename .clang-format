@@ -1,1 +1,10 @@
 BasedOnStyle: LLVM
+UseTab: Never
+TabWidth: 2
+IndentWidth: 2
+
+Language: Cpp
+Standard: c++20
+
+NamespaceIndentation: All
+FixNamespaceComments: false
