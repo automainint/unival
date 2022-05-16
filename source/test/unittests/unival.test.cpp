@@ -2,10 +2,10 @@
  *
  *  This file is part of the Laplace project.
  *
- *  Laplace is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty
- *  of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
- *  the MIT License for more details.
+ *  Laplace is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the
+ * implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the MIT License for more details.
  */
 
 #include "../../unival/unival.h"
@@ -14,7 +14,7 @@
 #include <vector>
 
 namespace unival::test {
-  using std::u8string_view, std::vector;
+  using std::u8string_view, std::vector, std::span;
 
   TEST_CASE("unival created") { auto val = unival {}; }
 
@@ -78,9 +78,10 @@ namespace unival::test {
     REQUIRE(val.get_uint() == 4242424242);
   }
 
-  TEST_CASE("create unival from unsigned long long extreme value") {
-    auto val =
-        unival { static_cast<unsigned long long>(18446744073709551615ull) };
+  TEST_CASE("create unival from unsigned long long extreme "
+            "value") {
+    auto val = unival { static_cast<unsigned long long>(
+        18446744073709551615ull) };
     REQUIRE(val.get_uint() == 18446744073709551615ull);
   }
 
@@ -181,11 +182,13 @@ namespace unival::test {
 
   TEST_CASE("create unival from byte array") {
     auto compare_bytes = [](auto left, auto right) -> bool {
-      return std::equal(left.begin(), left.end(), right.begin(), right.end());
+      return std::equal(left.begin(), left.end(), right.begin(),
+                        right.end());
     };
 
     auto val = unival { vector<int8_t> { 1, 2, 3 } };
-    REQUIRE(compare_bytes(val.get_bytes().value(), vector<int8_t> { 1, 2, 3 }));
+    REQUIRE(compare_bytes(val.get_bytes().value(),
+                          vector<int8_t> { 1, 2, 3 }));
   }
 
   TEST_CASE("can not get byte array from int") {
@@ -201,5 +204,47 @@ namespace unival::test {
   TEST_CASE("is not byte array when created from int") {
     auto val = unival { 42 };
     REQUIRE(!val.is_bytes());
+  }
+
+  TEST_CASE("create byte array from span") {
+    auto compare_bytes = [](auto left, auto right) -> bool {
+      return std::equal(left.begin(), left.end(), right.begin(),
+                        right.end());
+    };
+
+    auto vec = vector<int8_t> { 1, 2, 3 };
+    auto val =
+        unival { span<int8_t const> { vec.begin(), vec.end() } };
+    REQUIRE(compare_bytes(val.get_bytes().value(), vec));
+  }
+
+  TEST_CASE("create unival from vector") {
+    auto vec =
+        vector<unival> { unival { 1 }, unival { 2 }, unival { 3 } };
+    auto val = unival { vec };
+
+    REQUIRE(val.get_vector().has_value());
+
+    if (val.get_vector().has_value()) {
+      REQUIRE(val.get_vector().value().size() == 3);
+
+      if (val.get_vector().value().size() == 3) {
+        REQUIRE(val.get_vector().value()[0].get_integer() == 1);
+        REQUIRE(val.get_vector().value()[1].get_integer() == 2);
+        REQUIRE(val.get_vector().value()[2].get_integer() == 3);
+      }
+    }
+  }
+
+  TEST_CASE("is vector when created from vector") {
+    auto vec =
+        vector<unival> { unival { 1 }, unival { 2 }, unival { 3 } };
+    auto val = unival { vec };
+    REQUIRE(val.is_vector());
+  }
+
+  TEST_CASE("is not vector when created from int") {
+    auto val = unival { 42 };
+    REQUIRE(!val.is_vector());
   }
 }
