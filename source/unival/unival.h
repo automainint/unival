@@ -22,6 +22,7 @@ namespace unival {
   class unival {
   public:
     unival() noexcept = default;
+    explicit unival(bool value) noexcept;
     explicit unival(signed char value) noexcept;
     explicit unival(signed short value) noexcept;
     explicit unival(signed int value) noexcept;
@@ -34,18 +35,21 @@ namespace unival {
     explicit unival(unsigned long long value) noexcept;
     explicit unival(float value) noexcept;
     explicit unival(double value) noexcept;
-    explicit unival(std::string_view value) noexcept;
-    explicit unival(std::u8string_view value) noexcept;
+    explicit unival(char const *value) noexcept;
+    explicit unival(char8_t const *value) noexcept;
     explicit unival(std::span<int8_t const> value) noexcept;
     explicit unival(std::span<unival const> value) noexcept;
 
     [[nodiscard]] auto is_empty() const noexcept -> bool;
+    [[nodiscard]] auto is_boolean() const noexcept -> bool;
     [[nodiscard]] auto is_integer() const noexcept -> bool;
     [[nodiscard]] auto is_float() const noexcept -> bool;
     [[nodiscard]] auto is_string() const noexcept -> bool;
     [[nodiscard]] auto is_bytes() const noexcept -> bool;
     [[nodiscard]] auto is_vector() const noexcept -> bool;
 
+    [[nodiscard]] auto get_boolean() const noexcept
+        -> std::optional<bool>;
     [[nodiscard]] auto get_integer() const noexcept
         -> std::optional<signed long long>;
     [[nodiscard]] auto get_uint() const noexcept
@@ -62,6 +66,7 @@ namespace unival {
   private:
     enum index_ : ptrdiff_t {
       n_empty,
+      n_boolean,
       n_integer,
       n_float,
       n_string,
@@ -69,7 +74,7 @@ namespace unival {
       n_vector
     };
 
-    std::variant<std::monostate, signed long long, double,
+    std::variant<std::monostate, bool, signed long long, double,
                  std::u8string, std::vector<int8_t>,
                  std::vector<unival>>
         m_value = std::monostate {};

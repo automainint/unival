@@ -247,4 +247,34 @@ namespace unival::test {
     auto val = unival { 42 };
     REQUIRE(!val.is_vector());
   }
+
+  TEST_CASE("can not get vector from int") {
+    auto val = unival { 42 };
+    REQUIRE(!val.get_vector().has_value());
+  }
+
+  TEST_CASE("create unival from true") {
+    auto val = unival { true };
+    REQUIRE(val.get_boolean() == true);
+  }
+
+  TEST_CASE("create unival from false") {
+    auto val = unival { false };
+    REQUIRE(val.get_boolean() == false);
+  }
+
+  TEST_CASE("is boolean when created from true") {
+    auto val = unival { true };
+    REQUIRE(val.is_boolean());
+  }
+
+  TEST_CASE("is not boolean when created from int") {
+    auto val = unival { 42 };
+    REQUIRE(!val.is_boolean());
+  }
+
+  TEST_CASE("can not get boolean from int") {
+    auto val = unival { 42 };
+    REQUIRE(!val.get_boolean().has_value());
+  }
 }
