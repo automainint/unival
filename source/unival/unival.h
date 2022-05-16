@@ -37,8 +37,30 @@ namespace unival {
     explicit unival(double value) noexcept;
     explicit unival(char const *value) noexcept;
     explicit unival(char8_t const *value) noexcept;
+
+    /*  Create byte array.
+     */
     explicit unival(std::span<int8_t const> value) noexcept;
+
+    /*  Create vector.
+     */
     explicit unival(std::span<unival const> value) noexcept;
+
+    /*  Create composite.
+     */
+    explicit unival(
+        std::span<std::pair<unival, unival> const> value) noexcept;
+
+    [[nodiscard]] auto operator==(unival const &val) const noexcept
+        -> bool;
+    [[nodiscard]] auto operator<(unival const &val) const noexcept
+        -> bool;
+    [[nodiscard]] auto operator<=(unival const &val) const noexcept
+        -> bool;
+    [[nodiscard]] auto operator>=(unival const &val) const noexcept
+        -> bool;
+    [[nodiscard]] auto operator>(unival const &val) const noexcept
+        -> bool;
 
     [[nodiscard]] auto is_empty() const noexcept -> bool;
     [[nodiscard]] auto is_boolean() const noexcept -> bool;
@@ -60,8 +82,21 @@ namespace unival {
         -> std::optional<std::u8string_view>;
     [[nodiscard]] auto get_bytes() const noexcept
         -> std::optional<std::span<int8_t const>>;
-    [[nodiscard]] auto get_vector() const noexcept
-        -> std::optional<std::span<unival const>>;
+
+    /*  Get vector or composite element count.
+     */
+    [[nodiscard]] auto get_size() const noexcept
+        -> std::optional<signed long long>;
+
+    /*  Get vector element by index.
+     */
+    [[nodiscard]] auto get(signed long long index) const noexcept
+        -> std::optional<unival>;
+
+    /*  Get composite element by key.
+     */
+    [[nodiscard]] auto get(unival const &key) const noexcept
+        -> std::optional<unival>;
 
   private:
     enum index_ : ptrdiff_t {
@@ -71,12 +106,15 @@ namespace unival {
       n_float,
       n_string,
       n_bytes,
-      n_vector
+      n_vector,
+      n_composite
     };
+
+    using composite_ = std::vector<std::pair<unival, unival>>;
 
     std::variant<std::monostate, bool, signed long long, double,
                  std::u8string, std::vector<int8_t>,
-                 std::vector<unival>>
+                 std::vector<unival>, composite_>
         m_value = std::monostate {};
   };
 }

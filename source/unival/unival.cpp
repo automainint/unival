@@ -10,9 +10,12 @@
 
 #include "unival.h"
 
+#include <algorithm>
+
 namespace unival {
-  using std::optional, std::nullopt, std::get, std::u8string,
-      std::string_view, std::u8string_view, std::vector, std::span;
+  using std::optional, std::nullopt, std::u8string, std::string_view,
+      std::u8string_view, std::vector, std::span, std::pair,
+      std::lower_bound, std::sort;
 
   unival::unival(bool value) noexcept : m_value(value) { }
 
@@ -54,6 +57,35 @@ namespace unival {
   unival::unival(span<unival const> value) noexcept
       : m_value(vector<unival> { value.begin(), value.end() }) { }
 
+  unival::unival(span<pair<unival, unival> const> value) noexcept
+      : m_value(composite_ { value.begin(), value.end() }) {
+    auto &comp = std::get<n_composite>(m_value);
+    sort(comp.begin(), comp.end(),
+         [](auto const &left, auto const &right) {
+           return left.first.m_value < right.first.m_value;
+         });
+  }
+
+  auto unival::operator==(unival const &val) const noexcept -> bool {
+    return m_value == val.m_value;
+  }
+
+  auto unival::operator<(unival const &val) const noexcept -> bool {
+    return m_value < val.m_value;
+  }
+
+  auto unival::operator<=(unival const &val) const noexcept -> bool {
+    return m_value <= val.m_value;
+  }
+
+  auto unival::operator>(unival const &val) const noexcept -> bool {
+    return m_value > val.m_value;
+  }
+
+  auto unival::operator>=(unival const &val) const noexcept -> bool {
+    return m_value >= val.m_value;
+  }
+
   auto unival::is_empty() const noexcept -> bool {
     return m_value.index() == n_empty;
   }
@@ -85,48 +117,69 @@ namespace unival {
   auto unival::get_boolean() const noexcept -> optional<bool> {
     if (!is_boolean())
       return nullopt;
-    return get<n_boolean>(m_value);
+    return std::get<n_boolean>(m_value);
   }
 
   auto unival::get_integer() const noexcept
       -> optional<signed long long> {
     if (!is_integer())
       return nullopt;
-    return get<n_integer>(m_value);
+    return std::get<n_integer>(m_value);
   }
 
   auto unival::get_uint() const noexcept
       -> optional<unsigned long long> {
     if (!is_integer())
       return nullopt;
-    return static_cast<unsigned long long>(get<n_integer>(m_value));
+    return static_cast<unsigned long long>(
+        std::get<n_integer>(m_value));
   }
 
   auto unival::get_float() const noexcept -> optional<double> {
     if (!is_float())
       return nullopt;
-    return get<n_float>(m_value);
+    return std::get<n_float>(m_value);
   }
 
   auto unival::get_string() const noexcept
       -> optional<u8string_view> {
     if (!is_string())
       return nullopt;
-    return get<n_string>(m_value);
+    return std::get<n_string>(m_value);
   }
 
   auto unival::get_bytes() const noexcept
       -> optional<span<int8_t const>> {
     if (!is_bytes())
       return nullopt;
-    auto const &v = get<n_bytes>(m_value);
+    auto const &v = std::get<n_bytes>(m_value);
     return span<int8_t const> { v.begin(), v.end() };
   }
 
-  auto unival::get_vector() const noexcept
-      -> optional<span<unival const>> {
+  auto unival::get_size() const noexcept
+      -> optional<signed long long> {
     if (!is_vector())
       return nullopt;
-    return span<unival const> { get<n_vector>(m_value) };
+    return std::get<n_vector>(m_value).size();
+  }
+
+  auto unival::get(signed long long index) const noexcept
+      -> optional<unival> {
+    if (!is_vector())
+      return nullopt;
+    auto const &v = std::get<n_vector>(m_value);
+    if (index < 0 || index >= v.size())
+      return nullopt;
+    return v[index];
+  }
+
+  auto unival::get(unival const &key) const noexcept
+      -> optional<unival> {
+    auto const &comp = std::get<n_composite>(m_value);
+    auto i = lower_bound(comp.begin(), comp.end(), key,
+                         [](auto const &value, auto const &key) {
+                           return value.first < key;
+                         });
+    return i->second;
   }
 }

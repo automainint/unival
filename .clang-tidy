@@ -4,4 +4,6 @@ Checks: >
   -fuchsia-*,
   -google-runtime-int,
   -*-uppercase-literal-suffix,
-  -*-braces-around-statements
+  -*-braces-around-statements,
+  -*-namespace-comment,
+  -*-namespace-comments

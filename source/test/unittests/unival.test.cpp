@@ -14,7 +14,7 @@
 #include <vector>
 
 namespace unival::test {
-  using std::u8string_view, std::vector, std::span;
+  using std::u8string_view, std::vector, std::span, std::pair;
 
   TEST_CASE("unival created") { auto val = unival {}; }
 
@@ -222,18 +222,47 @@ namespace unival::test {
     auto vec =
         vector<unival> { unival { 1 }, unival { 2 }, unival { 3 } };
     auto val = unival { vec };
+  }
 
-    REQUIRE(val.get_vector().has_value());
+  TEST_CASE("can get unival vector value") {
+    auto vec = vector<unival> { unival { 42 } };
+    auto val = unival { vec };
 
-    if (val.get_vector().has_value()) {
-      REQUIRE(val.get_vector().value().size() == 3);
+    REQUIRE(val.get(0).value().get_integer() == 42);
+  }
 
-      if (val.get_vector().value().size() == 3) {
-        REQUIRE(val.get_vector().value()[0].get_integer() == 1);
-        REQUIRE(val.get_vector().value()[1].get_integer() == 2);
-        REQUIRE(val.get_vector().value()[2].get_integer() == 3);
-      }
-    }
+  TEST_CASE("can not get unival vector out of bounds value") {
+    auto vec = vector<unival> { unival { 42 } };
+    auto val = unival { vec };
+
+    REQUIRE(!val.get(1).has_value());
+  }
+
+  TEST_CASE("can not get unival vector value from int") {
+    auto val = unival { 42 };
+
+    REQUIRE(!val.get(0).has_value());
+  }
+
+  TEST_CASE("can get unival 1-vector size") {
+    auto vec = vector<unival> { unival { 42 } };
+    auto val = unival { vec };
+
+    REQUIRE(val.get_size() == 1);
+  }
+
+  TEST_CASE("can get unival 3-vector size") {
+    auto vec =
+        vector<unival> { unival { 1 }, unival { 2 }, unival { 3 } };
+    auto val = unival { vec };
+
+    REQUIRE(val.get_size() == 3);
+  }
+
+  TEST_CASE("can not get unival vector size from int") {
+    auto val = unival { 42 };
+
+    REQUIRE(!val.get_size().has_value());
   }
 
   TEST_CASE("is vector when created from vector") {
@@ -246,11 +275,6 @@ namespace unival::test {
   TEST_CASE("is not vector when created from int") {
     auto val = unival { 42 };
     REQUIRE(!val.is_vector());
-  }
-
-  TEST_CASE("can not get vector from int") {
-    auto val = unival { 42 };
-    REQUIRE(!val.get_vector().has_value());
   }
 
   TEST_CASE("create unival from true") {
@@ -276,5 +300,86 @@ namespace unival::test {
   TEST_CASE("can not get boolean from int") {
     auto val = unival { 42 };
     REQUIRE(!val.get_boolean().has_value());
+  }
+
+  TEST_CASE("compare unival ints") {
+    auto val1 = unival { 42 };
+    auto val2 = unival { 42 };
+    auto val3 = unival { 43 };
+
+    REQUIRE(val1 == val2);
+    REQUIRE(val1 != val3);
+    REQUIRE(val1 <= val2);
+    REQUIRE(val1 < val3);
+    REQUIRE(val3 >= val2);
+    REQUIRE(val3 > val1);
+  }
+
+  TEST_CASE("create 1-composite unival") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } } } };
+    REQUIRE(val.get(unival { 1 }) == unival { 2 });
+  }
+
+  TEST_CASE("create 3-composite unival") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } },
+        pair { unival { 5 }, unival { 6 } } } };
+    REQUIRE(val.get(unival { 1 }) == unival { 2 });
+    REQUIRE(val.get(unival { 3 }) == unival { 4 });
+    REQUIRE(val.get(unival { 5 }) == unival { 6 });
+  }
+
+  TEST_CASE("create 3-composite unival unsorted") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 5 }, unival { 6 } },
+        pair { unival { 3 }, unival { 4 } },
+        pair { unival { 1 }, unival { 2 } } } };
+    REQUIRE(val.get(unival { 1 }) == unival { 2 });
+    REQUIRE(val.get(unival { 3 }) == unival { 4 });
+    REQUIRE(val.get(unival { 5 }) == unival { 6 });
+  }
+
+  TEST_CASE("compare unival different types") {
+    auto a = unival {};
+    auto b = unival { true };
+    auto c = unival { 42 };
+    auto d = unival { 3.14 };
+    auto e = unival { "test" };
+    auto f = unival { vector<int8_t> { 1, 2, 3 } };
+    auto g = unival { vector<unival> { unival { 1 }, unival { 2 } } };
+    auto h = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } } } };
+
+    REQUIRE(a != b);
+    REQUIRE(a != c);
+    REQUIRE(a != d);
+    REQUIRE(a != e);
+    REQUIRE(a != f);
+    REQUIRE(a != g);
+    REQUIRE(a != h);
+
+    REQUIRE(a < b);
+    REQUIRE(b < c);
+    REQUIRE(c < d);
+    REQUIRE(d < e);
+    REQUIRE(e < f);
+    REQUIRE(f < g);
+    REQUIRE(g < h);
+  }
+
+  TEST_CASE("compare unival vectors") {
+    auto foo =
+        unival { vector<unival> { unival { 1 }, unival { 2 } } };
+    auto bar =
+        unival { vector<unival> { unival { 3 }, unival { 4 } } };
+    auto baz = unival { vector<unival> { unival { 3 } } };
+
+    REQUIRE(foo != bar);
+    REQUIRE(foo < bar);
+    REQUIRE(foo < baz);
+    REQUIRE(bar > baz);
   }
 }
