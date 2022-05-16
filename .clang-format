@@ -8,3 +8,5 @@ Standard: c++20
 
 NamespaceIndentation: All
 FixNamespaceComments: false
+SpaceBeforeCpp11BracedList: true
+Cpp11BracedListStyle: false

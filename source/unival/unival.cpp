@@ -11,7 +11,12 @@
 #include "unival.h"
 
 namespace unival {
-  using std::optional, std::nullopt, std::get;
+  using std::optional, std::nullopt, std::get, std::u8string, std::string_view,
+      std::u8string_view, std::vector, std::span;
+
+  static auto as_u8string(string_view s) {
+    return u8string(s.begin(), s.end());
+  }
 
   unival::unival(signed char value) noexcept
       : m_value(static_cast<long long int>(value)) {}
@@ -38,6 +43,11 @@ namespace unival {
   unival::unival(float value) noexcept : m_value(static_cast<double>(value)) {}
   unival::unival(double value) noexcept : m_value(value) {}
 
+  unival::unival(string_view value) noexcept : m_value(as_u8string(value)) {}
+  unival::unival(u8string_view value) noexcept : m_value(u8string { value }) {}
+
+  unival::unival(vector<int8_t> const &value) noexcept : m_value(value) {}
+
   auto unival::is_empty() const noexcept -> bool {
     return m_value.index() == n_empty;
   }
@@ -48,6 +58,14 @@ namespace unival {
 
   auto unival::is_float() const noexcept -> bool {
     return m_value.index() == n_float;
+  }
+
+  auto unival::is_string() const noexcept -> bool {
+    return m_value.index() == n_string;
+  }
+
+  auto unival::is_bytes() const noexcept -> bool {
+    return m_value.index() == n_bytes;
   }
 
   auto unival::get_integer() const noexcept -> optional<signed long long> {
@@ -66,5 +84,18 @@ namespace unival {
     if (m_value.index() != n_float)
       return nullopt;
     return get<n_float>(m_value);
+  }
+
+  auto unival::get_string() const noexcept -> optional<u8string_view> {
+    if (m_value.index() != n_string)
+      return nullopt;
+    return get<n_string>(m_value);
+  }
+
+  auto unival::get_bytes() const noexcept -> optional<span<int8_t const>> {
+    if (m_value.index() != n_bytes)
+      return nullopt;
+    auto const &v = get<n_bytes>(m_value);
+    return span<int8_t const> { v.begin(), v.end() };
   }
 }
