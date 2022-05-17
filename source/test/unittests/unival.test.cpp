@@ -15,12 +15,23 @@
 
 namespace unival::test {
   using std::u8string_view, std::vector, std::span, std::pair,
-      std::string, std::u8string;
+      std::string, std::u8string, std::optional;
 
   TEST_CASE("unival created") { auto val = unival {}; }
 
   TEST_CASE("unival is empty by default") {
     auto val = unival {};
+    REQUIRE(val.is_empty());
+  }
+
+  TEST_CASE("unival created from nullopt") {
+    auto val = unival { optional<unival> {} };
+    REQUIRE(val.is_empty());
+  }
+
+  TEST_CASE("unival assigned to nullopt") {
+    auto val = unival {};
+    val = optional<unival> {};
     REQUIRE(val.is_empty());
   }
 
@@ -94,6 +105,12 @@ namespace unival::test {
   TEST_CASE("create unival from double") {
     auto val = unival { 424242.42 };
     REQUIRE(val.get_float() == Approx(424242.42));
+  }
+
+  TEST_CASE("create unival from optional") {
+    auto foo = optional<unival> { unival { 42 } };
+    auto bar = unival { foo };
+    REQUIRE(bar.get_integer() == 42);
   }
 
   TEST_CASE("get uint from int") {
