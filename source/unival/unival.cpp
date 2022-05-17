@@ -11,11 +11,25 @@
 #include "unival.h"
 
 #include <algorithm>
+#include <iostream>
 
 namespace unival {
   using std::optional, std::nullopt, std::u8string, std::string_view,
       std::u8string_view, std::vector, std::span, std::pair,
       std::lower_bound, std::sort;
+
+  unival::unival(optional<unival> opt) noexcept {
+    if (opt.has_value())
+      *this = *opt;
+  }
+
+  auto unival::operator=(optional<unival> opt) noexcept -> unival & {
+    if (opt.has_value())
+      *this = *opt;
+    else
+      *this = unival {};
+    return *this;
+  }
 
   unival::unival(bool value) noexcept : m_value(value) { }
 
@@ -196,11 +210,46 @@ namespace unival {
 
   auto unival::get(unival const &key) const noexcept
       -> optional<unival> {
+    if (!is_composite())
+      return nullopt;
     auto const &comp = std::get<n_composite>(m_value);
     auto i = lower_bound(comp.begin(), comp.end(), key,
                          [](auto const &value, auto const &key) {
                            return value.first < key;
                          });
+    if (i == comp.end() || i->first != key)
+      return nullopt;
     return i->second;
+  }
+
+  auto unival::set(signed long long index,
+                   unival const &value) const noexcept
+      -> optional<unival> {
+    if (!is_vector())
+      return nullopt;
+    if (index < 0 || index >= std::get<n_vector>(m_value).size())
+      return nullopt;
+    auto result = unival { *this };
+    auto &v = std::get<n_vector>(result.m_value);
+    v[index] = value;
+    return result;
+  }
+
+  auto unival::set(unival const &key,
+                   unival const &value) const noexcept
+      -> optional<unival> {
+    if (!is_composite())
+      return nullopt;
+    auto result = unival { *this };
+    auto &comp = std::get<n_composite>(result.m_value);
+    auto i = lower_bound(comp.begin(), comp.end(), key,
+                         [](auto const &value, auto const &key) {
+                           return value.first < key;
+                         });
+    if (i != comp.end() && i->first == key)
+      i->second = value;
+    else
+      comp.emplace(i, key, value);
+    return result;
   }
 }

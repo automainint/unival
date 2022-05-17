@@ -22,6 +22,9 @@ namespace unival {
   class unival {
   public:
     unival() noexcept = default;
+    explicit unival(std::optional<unival> opt) noexcept;
+    auto operator=(std::optional<unival> opt) noexcept -> unival &;
+
     explicit unival(bool value) noexcept;
     explicit unival(signed char value) noexcept;
     explicit unival(signed short value) noexcept;
@@ -99,6 +102,17 @@ namespace unival {
     /*  Get composite element by key.
      */
     [[nodiscard]] auto get(unival const &key) const noexcept
+        -> std::optional<unival>;
+
+    /*  Set vector element by index.
+     */
+    auto set(signed long long index,
+             unival const &value) const noexcept
+        -> std::optional<unival>;
+
+    /*  Set composite element by key.
+     */
+    auto set(unival const &key, unival const &value) const noexcept
         -> std::optional<unival>;
 
   private:

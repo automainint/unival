@@ -2,10 +2,10 @@
  *
  *  This file is part of the Laplace project.
  *
- *  Laplace is distributed in the hope that it will be
- * useful, but WITHOUT ANY WARRANTY; without even the
- * implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the MIT License for more details.
+ *  Laplace is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty
+ *  of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
+ *  the MIT License for more details.
  */
 
 #include "../../unival/unival.h"
@@ -236,6 +236,7 @@ namespace unival::test {
     auto vec = vector<unival> { unival { 42 } };
     auto val = unival { vec };
 
+    REQUIRE(!val.get(-1).has_value());
     REQUIRE(!val.get(1).has_value());
   }
 
@@ -417,6 +418,20 @@ namespace unival::test {
     REQUIRE(val.get_size() == 3);
   }
 
+  TEST_CASE("can not get composite element from int unival") {
+    auto val = unival { 42 };
+    REQUIRE(!val.get(unival { 1 }).has_value());
+  }
+
+  TEST_CASE("can not get out of bounds composite unival element") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } },
+        pair { unival { 5 }, unival { 6 } } } };
+    REQUIRE(!val.get(unival { 2 }).has_value());
+    REQUIRE(!val.get(unival { 7 }).has_value());
+  }
+
   TEST_CASE("create unival from std::string") {
     auto str = string { "foo" };
     auto val = unival { str };
@@ -427,5 +442,43 @@ namespace unival::test {
     auto str = u8string { u8"foo" };
     auto val = unival { str };
     REQUIRE(val.get_string().value() == str);
+  }
+
+  TEST_CASE("edit vector unival") {
+    auto val =
+        unival { vector<unival> { unival { 1 }, unival { 2 } } };
+    val = val.set(0, unival { 42 });
+    REQUIRE(val.get_size() == 2);
+    REQUIRE(val.get(0) == unival { 42 });
+    REQUIRE(val.get(1) == unival { 2 });
+  }
+
+  TEST_CASE("can not edit vector element of int unival") {
+    auto val = unival { 42 };
+    REQUIRE(!val.set(0, unival { 1 }).has_value());
+  }
+
+  TEST_CASE("can not edit out of bounds vector unival element") {
+    auto val =
+        unival { vector<unival> { unival { 1 }, unival { 2 } } };
+    REQUIRE(!val.set(-1, unival { 1 }).has_value());
+    REQUIRE(!val.set(2, unival { 1 }).has_value());
+  }
+
+  TEST_CASE("edit composite unival") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } },
+        pair { unival { 5 }, unival { 6 } } } };
+    val = val.set(unival { 1 }, unival { 42 });
+    REQUIRE(val.get_size() == 3);
+    REQUIRE(val.get(unival { 1 }) == unival { 42 });
+    REQUIRE(val.get(unival { 3 }) == unival { 4 });
+    REQUIRE(val.get(unival { 5 }) == unival { 6 });
+  }
+
+  TEST_CASE("can not edit composite element of int unival") {
+    auto val = unival { 42 };
+    REQUIRE(!val.set(unival { 1 }, unival { 1 }).has_value());
   }
 }
