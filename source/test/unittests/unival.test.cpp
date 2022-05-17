@@ -14,7 +14,8 @@
 #include <vector>
 
 namespace unival::test {
-  using std::u8string_view, std::vector, std::span, std::pair;
+  using std::u8string_view, std::vector, std::span, std::pair,
+      std::string, std::u8string;
 
   TEST_CASE("unival created") { auto val = unival {}; }
 
@@ -381,5 +382,50 @@ namespace unival::test {
     REQUIRE(foo < bar);
     REQUIRE(foo < baz);
     REQUIRE(bar > baz);
+  }
+
+  TEST_CASE("is composite when created from composite") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } } } };
+    REQUIRE(val.is_composite());
+  }
+
+  TEST_CASE("is not composite when created from int") {
+    auto val = unival { 42 };
+    REQUIRE(!val.is_composite());
+  }
+
+  TEST_CASE("can get size of composite unival") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } },
+        pair { unival { 5 }, unival { 6 } } } };
+    REQUIRE(val.get_size() == 3);
+  }
+
+  TEST_CASE("create 3-composite unival repeating") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } },
+        pair { unival { 5 }, unival { 6 } },
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } },
+        pair { unival { 5 }, unival { 6 } } } };
+    REQUIRE(val.get(unival { 1 }) == unival { 2 });
+    REQUIRE(val.get(unival { 3 }) == unival { 4 });
+    REQUIRE(val.get(unival { 5 }) == unival { 6 });
+    REQUIRE(val.get_size() == 3);
+  }
+
+  TEST_CASE("create unival from std::string") {
+    auto str = string { "foo" };
+    auto val = unival { str };
+    REQUIRE(val.get_string().value() == u8string { u8"foo" });
+  }
+
+  TEST_CASE("create unival from std::u8string") {
+    auto str = u8string { u8"foo" };
+    auto val = unival { str };
+    REQUIRE(val.get_string().value() == str);
   }
 }

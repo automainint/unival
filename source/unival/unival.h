@@ -37,6 +37,8 @@ namespace unival {
     explicit unival(double value) noexcept;
     explicit unival(char const *value) noexcept;
     explicit unival(char8_t const *value) noexcept;
+    explicit unival(std::string_view value) noexcept;
+    explicit unival(std::u8string_view value) noexcept;
 
     /*  Create byte array.
      */
@@ -69,6 +71,7 @@ namespace unival {
     [[nodiscard]] auto is_string() const noexcept -> bool;
     [[nodiscard]] auto is_bytes() const noexcept -> bool;
     [[nodiscard]] auto is_vector() const noexcept -> bool;
+    [[nodiscard]] auto is_composite() const noexcept -> bool;
 
     [[nodiscard]] auto get_boolean() const noexcept
         -> std::optional<bool>;

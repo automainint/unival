@@ -51,6 +51,14 @@ namespace unival {
   unival::unival(char8_t const *value) noexcept
       : m_value(u8string { value }) { }
 
+  unival::unival(std::string_view value) noexcept
+      : m_value(u8string {
+            reinterpret_cast<char8_t const *>(value.data()),
+            value.size() }) { }
+
+  unival::unival(std::u8string_view value) noexcept
+      : m_value(u8string { value }) { }
+
   unival::unival(span<int8_t const> value) noexcept
       : m_value(vector<int8_t> { value.begin(), value.end() }) { }
 
@@ -64,6 +72,13 @@ namespace unival {
          [](auto const &left, auto const &right) {
            return left.first.m_value < right.first.m_value;
          });
+    for (auto i = comp.begin(); i != comp.end(); i++) {
+      auto j = i;
+      while (j != comp.end() && j->first == i->first)
+        j++;
+      if (j - i > 1)
+        comp.erase(i + 1, j);
+    }
   }
 
   auto unival::operator==(unival const &val) const noexcept -> bool {
@@ -114,6 +129,10 @@ namespace unival {
     return m_value.index() == n_vector;
   }
 
+  auto unival::is_composite() const noexcept -> bool {
+    return m_value.index() == n_composite;
+  }
+
   auto unival::get_boolean() const noexcept -> optional<bool> {
     if (!is_boolean())
       return nullopt;
@@ -158,9 +177,11 @@ namespace unival {
 
   auto unival::get_size() const noexcept
       -> optional<signed long long> {
-    if (!is_vector())
-      return nullopt;
-    return std::get<n_vector>(m_value).size();
+    if (is_vector())
+      return std::get<n_vector>(m_value).size();
+    if (is_composite())
+      return std::get<n_composite>(m_value).size();
+    return nullopt;
   }
 
   auto unival::get(signed long long index) const noexcept
