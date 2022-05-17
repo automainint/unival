@@ -494,6 +494,19 @@ namespace unival::test {
     REQUIRE(val.get(unival { 5 }) == unival { 6 });
   }
 
+  TEST_CASE("edit composite unival by new keys") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 5 }, unival { 6 } } } };
+    val = val.set(unival { 3 }, unival { 4 });
+    val = val.set(unival { 7 }, unival { 42 });
+    REQUIRE(val.get_size() == 4);
+    REQUIRE(val.get(unival { 1 }) == unival { 2 });
+    REQUIRE(val.get(unival { 3 }) == unival { 4 });
+    REQUIRE(val.get(unival { 5 }) == unival { 6 });
+    REQUIRE(val.get(unival { 7 }) == unival { 42 });
+  }
+
   TEST_CASE("can not edit composite element of int unival") {
     auto val = unival { 42 };
     REQUIRE(!val.set(unival { 1 }, unival { 1 }).has_value());
