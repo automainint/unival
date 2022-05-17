@@ -11,7 +11,6 @@
 #include "unival.h"
 
 #include <algorithm>
-#include <iostream>
 
 namespace unival {
   using std::optional, std::nullopt, std::u8string, std::string_view,
@@ -20,14 +19,14 @@ namespace unival {
 
   unival::unival(optional<unival> opt) noexcept {
     if (opt.has_value())
-      *this = *opt;
+      m_value = opt->m_value;
   }
 
   auto unival::operator=(optional<unival> opt) noexcept -> unival & {
     if (opt.has_value())
-      *this = *opt;
+      *this = opt.value();
     else
-      *this = unival {};
+      m_value = std::monostate {};
     return *this;
   }
 
