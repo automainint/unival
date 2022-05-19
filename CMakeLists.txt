@@ -25,9 +25,24 @@ FetchContent_MakeAvailable(Catch2)
 
 add_executable(${UNIVAL_TEST})
 target_compile_features(${UNIVAL_TEST} PRIVATE cxx_std_20)
-target_compile_options(${UNIVAL_TEST} PRIVATE -O0 -g --coverage)
-target_link_options(${UNIVAL_TEST} PRIVATE --coverage)
 target_link_libraries(${UNIVAL_TEST} PRIVATE Catch2::Catch2)
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  target_compile_options(
+    ${UNIVAL_TEST} PRIVATE
+    -O0 -g --coverage
+    #-fsanitize=undefined,address
+  )
+  target_link_options(
+    ${UNIVAL_TEST} PRIVATE
+    --coverage
+    #-fsanitize=undefined,address
+  )
+endif()
+
+if(MSVC)
+  target_compile_options(${UNIVAL_TEST} INTERFACE /Od)
+endif()
 
 add_subdirectory(source)
 

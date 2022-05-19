@@ -1,11 +1,4 @@
 /*  Copyright (c) 2022 Mitya Selivanov
- *
- *  This file is part of the Laplace project.
- *
- *  Laplace is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty
- *  of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
- *  the MIT License for more details.
  */
 
 #include "unival.h"
@@ -24,7 +17,9 @@ namespace unival {
 
   auto unival::operator=(optional<unival> opt) noexcept -> unival & {
     if (opt.has_value())
-      *this = opt.value();
+      // gcc-11 bug
+      // m_value = opt->m_value;
+      *this = *opt;
     else
       m_value = std::monostate {};
     return *this;
@@ -224,23 +219,36 @@ namespace unival {
   auto unival::set(signed long long index,
                    unival const &value) const noexcept
       -> optional<unival> {
-    if (!is_vector())
+    auto val = unival { *this };
+    if (!val._set(index, value))
       return nullopt;
-    if (index < 0 || index >= std::get<n_vector>(m_value).size())
-      return nullopt;
-    auto result = unival { *this };
-    auto &v = std::get<n_vector>(result.m_value);
-    v[index] = value;
-    return result;
+    return val;
   }
 
   auto unival::set(unival const &key,
                    unival const &value) const noexcept
       -> optional<unival> {
-    if (!is_composite())
+    auto val = unival { *this };
+    if (!val._set(key, value))
       return nullopt;
-    auto result = unival { *this };
-    auto &comp = std::get<n_composite>(result.m_value);
+    return val;
+  }
+
+  auto unival::_set(signed long long index,
+                    unival const &value) noexcept -> bool {
+    if (!is_vector())
+      return false;
+    if (index < 0 || index >= std::get<n_vector>(m_value).size())
+      return false;
+    std::get<n_vector>(m_value)[index] = value;
+    return true;
+  }
+
+  auto unival::_set(unival const &key, unival const &value) noexcept
+      -> bool {
+    if (!is_composite())
+      return false;
+    auto &comp = std::get<n_composite>(m_value);
     auto i = lower_bound(comp.begin(), comp.end(), key,
                          [](auto const &value, auto const &key) {
                            return value.first < key;
@@ -249,6 +257,6 @@ namespace unival {
       i->second = value;
     else
       comp.emplace(i, key, value);
-    return result;
+    return true;
   }
 }

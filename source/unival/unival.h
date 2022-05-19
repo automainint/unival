@@ -1,11 +1,4 @@
 /*  Copyright (c) 2022 Mitya Selivanov
- *
- *  This file is part of the Laplace project.
- *
- *  Laplace is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty
- *  of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
- *  the MIT License for more details.
  */
 
 #ifndef UNIVAL_UNIVAL_H
@@ -116,6 +109,12 @@ namespace unival {
         -> std::optional<unival>;
 
   private:
+    auto _set(signed long long index, unival const &value) noexcept
+        -> bool;
+
+    auto _set(unival const &key, unival const &value) noexcept
+        -> bool;
+
     enum index_ : ptrdiff_t {
       n_empty,
       n_boolean,
