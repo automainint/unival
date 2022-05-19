@@ -30,14 +30,10 @@ target_link_libraries(${UNIVAL_TEST} PRIVATE Catch2::Catch2)
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   target_compile_options(
     ${UNIVAL_TEST} PRIVATE
-    -O0 -g --coverage
-    #-fsanitize=undefined,address
-  )
+    -fsanitize=undefined,address --coverage -O0 -g)
   target_link_options(
     ${UNIVAL_TEST} PRIVATE
-    --coverage
-    #-fsanitize=undefined,address
-  )
+    -fsanitize=undefined,address --coverage)
 endif()
 
 if(MSVC)
