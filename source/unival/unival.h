@@ -4,6 +4,8 @@
 #ifndef UNIVAL_UNIVAL_H
 #define UNIVAL_UNIVAL_H
 
+#include "chain.h"
+
 #include <cstdint>
 #include <optional>
 #include <span>
@@ -14,6 +16,8 @@
 namespace unival {
   class unival {
   public:
+    friend class chain<unival>;
+
     unival() noexcept = default;
     explicit unival(std::optional<unival> opt) noexcept;
     auto operator=(std::optional<unival> opt) noexcept -> unival &;
@@ -87,6 +91,10 @@ namespace unival {
     [[nodiscard]] auto get_size() const noexcept
         -> std::optional<signed long long>;
 
+    [[nodiscard]] auto resize(signed long long size,
+                              unival const &def = {}) const noexcept
+        -> std::optional<unival>;
+
     /*  Get vector element by index.
      */
     [[nodiscard]] auto get(signed long long index) const noexcept
@@ -108,7 +116,13 @@ namespace unival {
     auto set(unival const &key, unival const &value) const noexcept
         -> std::optional<unival>;
 
+    auto edit() const noexcept -> chain<unival>;
+
   private:
+    auto _get(signed long long index) noexcept -> unival &;
+
+    auto _get(unival const &key) noexcept -> unival &;
+
     auto _set(signed long long index, unival const &value) noexcept
         -> bool;
 
