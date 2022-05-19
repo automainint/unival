@@ -663,6 +663,18 @@ namespace unival::test {
     REQUIRE(val.get(2) == unival { 3 });
   }
 
+  TEST_CASE("edit size of vector unival element") {
+    auto val = unival { vector<unival> {
+        unival { vector<unival> { unival { 1 }, unival { 2 } } },
+        unival { 2 } } };
+    val = val.edit().on(0).resize(3, unival { 42 }).commit();
+    REQUIRE(val ==
+            unival { vector<unival> {
+                unival { vector<unival> { unival { 1 }, unival { 2 },
+                                          unival { 42 } } },
+                unival { 2 } } });
+  }
+
   TEST_CASE("edit size of composite unival element") {
     auto val = unival { vector<pair<unival, unival>> {
         pair { unival { 1 }, unival { vector<unival> {
@@ -678,15 +690,21 @@ namespace unival::test {
                 pair { unival { 3 }, unival { 4 } } } });
   }
 
-  TEST_CASE("edit size of vector unival element") {
+  TEST_CASE("edit two vector elements of vector unival") {
     auto val = unival { vector<unival> {
         unival { vector<unival> { unival { 1 }, unival { 2 } } },
-        unival { 2 } } };
-    val = val.edit().on(0).resize(3, unival { 42 }).commit();
-    REQUIRE(val ==
-            unival { vector<unival> {
-                unival { vector<unival> { unival { 1 }, unival { 2 },
-                                          unival { 42 } } },
-                unival { 2 } } });
+        unival { vector<unival> { unival { 3 }, unival { 4 } } } } };
+    val = val.edit()
+              .on(0)
+              .set(1, unival { 42 })
+              .on(1)
+              .set(0, unival { 43 })
+              .commit();
+    REQUIRE(
+        val ==
+        unival { vector<unival> {
+            unival { vector<unival> { unival { 1 }, unival { 42 } } },
+            unival {
+                vector<unival> { unival { 43 }, unival { 4 } } } } });
   }
 }

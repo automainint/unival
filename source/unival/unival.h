@@ -6,12 +6,8 @@
 
 #include "chain.h"
 
-#include <cstdint>
 #include <optional>
-#include <span>
 #include <string>
-#include <variant>
-#include <vector>
 
 namespace unival {
   class unival {
@@ -107,13 +103,14 @@ namespace unival {
 
     /*  Set vector element by index.
      */
-    auto set(signed long long index,
-             unival const &value) const noexcept
+    [[nodiscard]] auto set(signed long long index,
+                           unival const &value) const noexcept
         -> std::optional<unival>;
 
     /*  Set composite element by key.
      */
-    auto set(unival const &key, unival const &value) const noexcept
+    [[nodiscard]] auto set(unival const &key,
+                           unival const &value) const noexcept
         -> std::optional<unival>;
 
     /*  Start edit chain.
@@ -133,7 +130,7 @@ namespace unival {
      *    .commit();
      *  '''
      */
-    auto edit() const noexcept -> chain<unival>;
+    [[nodiscard]] auto edit() const noexcept -> chain<unival>;
 
   private:
     auto _get(signed long long index) noexcept -> unival &;
@@ -148,7 +145,7 @@ namespace unival {
 
     void _resize(signed long long size, unival const &def) noexcept;
 
-    enum index_ : ptrdiff_t {
+    enum index_ {
       n_empty,
       n_boolean,
       n_integer,

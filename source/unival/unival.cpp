@@ -81,7 +81,7 @@ namespace unival {
            return left.first.m_value < right.first.m_value;
          });
     for (auto i = comp.begin(); i != comp.end(); i++) {
-      auto j = i;
+      auto j = i + 1;
       while (j != comp.end() && j->first == i->first)
         j++;
       if (j - i > 1)
