@@ -13,17 +13,32 @@ namespace unival {
   public:
     explicit chain(type_ const &value) noexcept;
 
+    /*  Apply changes.
+     */
     auto commit() noexcept -> type_;
 
+    /*  Set vector element by index.
+     */
     auto set(signed long long index, type_ const &value) noexcept
         -> chain<type_>;
 
+    /*  Set composite element by key.
+     */
     auto set(type_ const &key, type_ const &value) noexcept
         -> chain<type_>;
 
+    /*  Move cursor to vector element by index.
+     */
     auto on(signed long long index) noexcept -> chain<type_>;
 
+    /*  Move cursor to composite element by key.
+     */
     auto on(type_ const &key) noexcept -> chain<type_>;
+
+    /*  Resize vector.
+     */
+    auto resize(signed long long size,
+                type_ const &def = type_ {}) noexcept -> chain<type_>;
 
   private:
     using path_ = std::vector<std::variant<signed long long, type_>>;
@@ -34,9 +49,24 @@ namespace unival {
     static void _set(type_ &origin, path_span_ path,
                      type_ const &value) noexcept;
 
+    static void _resize(type_ &origin, path_span_ path,
+                        signed long long size,
+                        type_ const &def) noexcept;
+
+    struct set_ {
+      type_ value;
+    };
+
+    struct resize_ {
+      signed long long size = 0;
+      type_ def;
+    };
+
+    using action_ = std::variant<set_, resize_>;
+
     struct op_ {
       path_ path;
-      type_ value;
+      action_ action;
     };
 
     type_ m_value;

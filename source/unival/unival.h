@@ -116,6 +116,23 @@ namespace unival {
     auto set(unival const &key, unival const &value) const noexcept
         -> std::optional<unival>;
 
+    /*  Start edit chain.
+     *
+     *  Available chain methods:
+     *    on(index) - move cursor to vector element by index;
+     *    on(key) - move cursor to composite element by key;
+     *    set(index, value) - set vector element by index;
+     *    set(key, value) - set composite element by key;
+     *    commit() - apply changes.
+     *
+     *  Usage:
+     *  '''
+     *  new_val = val.edit()
+     *    .set(0, elem1)
+     *    .set(1, elem2)
+     *    .commit();
+     *  '''
+     */
     auto edit() const noexcept -> chain<unival>;
 
   private:
@@ -128,6 +145,8 @@ namespace unival {
 
     auto _set(unival const &key, unival const &value) noexcept
         -> bool;
+
+    void _resize(signed long long size, unival const &def) noexcept;
 
     enum index_ : ptrdiff_t {
       n_empty,

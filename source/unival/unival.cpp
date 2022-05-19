@@ -198,7 +198,7 @@ namespace unival {
     if (!is_vector() || size < 0)
       return nullopt;
     auto val = unival { *this };
-    std::get<n_vector>(val.m_value).resize(size, def);
+    val._resize(size, def);
     return val;
   }
 
@@ -289,5 +289,11 @@ namespace unival {
     else
       comp.emplace(i, key, value);
     return true;
+  }
+
+  void unival::_resize(signed long long size,
+                       unival const &def) noexcept {
+    auto &v = std::get<n_vector>(m_value);
+    v.resize(size, def);
   }
 }
