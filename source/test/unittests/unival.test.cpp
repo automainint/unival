@@ -472,6 +472,7 @@ namespace unival::test {
     auto val =
         unival { vector<unival> { unival { 1 }, unival { 2 } } };
     REQUIRE(!val.set(-1, unival { 1 }).has_value());
+    REQUIRE(!val.set(3, unival { 1 }).has_value());
   }
 
   TEST_CASE("can resize vector unival") {
@@ -493,16 +494,6 @@ namespace unival::test {
   TEST_CASE("can not resize int unival") {
     auto val = unival { 42 };
     REQUIRE(!val.resize(1).has_value());
-  }
-
-  TEST_CASE("can resize vector unival by setting new value") {
-    auto val =
-        unival { vector<unival> { unival { 1 }, unival { 2 } } };
-    val = val.set(2, unival { 3 });
-    REQUIRE(val.get_size() == 3);
-    REQUIRE(val.get(0) == unival { 1 });
-    REQUIRE(val.get(1) == unival { 2 });
-    REQUIRE(val.get(2) == unival { 3 });
   }
 
   TEST_CASE("set composite unival element") {
@@ -632,23 +623,25 @@ namespace unival::test {
     REQUIRE(val.get(1) == unival { 2 });
   }
 
-  TEST_CASE("insert element to vector unival") {
+  TEST_CASE("can not edit out of bounds element of vector unival") {
     auto val =
         unival { vector<unival> { unival { 1 }, unival { 2 } } };
-    val = val.edit().set(2, unival { 3 }).commit();
-    REQUIRE(val.get_size() == 3);
-    REQUIRE(val.get(0) == unival { 1 });
-    REQUIRE(val.get(1) == unival { 2 });
-    REQUIRE(val.get(2) == unival { 3 });
+    REQUIRE(!val.edit().set(2, unival { 3 }).commit().has_value());
   }
 
-  TEST_CASE("insert element to composite unival") {
+  TEST_CASE("insert elements to composite unival") {
     auto val = unival { vector<pair<unival, unival>> {
         pair { unival { 1 }, unival { 2 } },
         pair { unival { 3 }, unival { 4 } } } };
-    val = val.edit().set(unival { 5 }, unival { 6 }).commit();
-    REQUIRE(val.get_size() == 3);
+    val = val.edit()
+              .set(unival { -1 }, unival { -2 })
+              .set(unival { 2 }, unival { 3 })
+              .set(unival { 5 }, unival { 6 })
+              .commit();
+    REQUIRE(val.get_size() == 5);
+    REQUIRE(val.get(unival { -1 }) == unival { -2 });
     REQUIRE(val.get(unival { 1 }) == unival { 2 });
+    REQUIRE(val.get(unival { 2 }) == unival { 3 });
     REQUIRE(val.get(unival { 3 }) == unival { 4 });
     REQUIRE(val.get(unival { 5 }) == unival { 6 });
   }
@@ -706,5 +699,87 @@ namespace unival::test {
             unival { vector<unival> { unival { 1 }, unival { 42 } } },
             unival {
                 vector<unival> { unival { 43 }, unival { 4 } } } } });
+  }
+
+  TEST_CASE("can not edit vector element of composite unival") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } } } };
+    REQUIRE(!val.edit().set(0, unival { 42 }).commit().has_value());
+  }
+
+  TEST_CASE("can not edit composite element of vector unival") {
+    auto val =
+        unival { vector<unival> { unival { 1 }, unival { 2 } } };
+    REQUIRE(!val.edit()
+                 .set(unival { 0 }, unival { 42 })
+                 .commit()
+                 .has_value());
+  }
+
+  TEST_CASE("can not edit and resize int unival") {
+    auto val = unival { 1 };
+    REQUIRE(
+        !val.edit().resize(2, unival { 42 }).commit().has_value());
+  }
+
+  TEST_CASE("can not edit int unival on cursor") {
+    auto val = unival { 1 };
+    REQUIRE(!val.edit()
+                 .on(unival { 0 })
+                 .set(0, unival { 42 })
+                 .commit()
+                 .has_value());
+    REQUIRE(
+        !val.edit().on(0).set(0, unival { 42 }).commit().has_value());
+  }
+
+  TEST_CASE("can not resize composite unival") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } } } };
+    REQUIRE(
+        !val.edit().resize(3, unival { 42 }).commit().has_value());
+  }
+
+  TEST_CASE(
+      "can not edit and resize vector unival to negative size") {
+    auto val =
+        unival { vector<unival> { unival { 1 }, unival { 2 } } };
+    REQUIRE(
+        !val.edit().resize(-1, unival { 42 }).commit().has_value());
+  }
+
+  TEST_CASE("can not edit vector unival on out of bounds cursor") {
+    auto val =
+        unival { vector<unival> { unival { 1 }, unival { 2 } } };
+    REQUIRE(!val.edit()
+                 .on(-1)
+                 .set(0, unival { 42 })
+                 .commit()
+                 .has_value());
+    REQUIRE(
+        !val.edit().on(2).set(0, unival { 42 }).commit().has_value());
+  }
+
+  TEST_CASE("can not edit composite unival on out of bounds cursor") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } } } };
+    REQUIRE(!val.edit()
+                 .on(unival { 2 })
+                 .set(0, unival { 42 })
+                 .commit()
+                 .has_value());
+    REQUIRE(!val.edit()
+                 .on(unival { -1 })
+                 .set(0, unival { 42 })
+                 .commit()
+                 .has_value());
+    REQUIRE(!val.edit()
+                 .on(unival { 4 })
+                 .set(0, unival { 42 })
+                 .commit()
+                 .has_value());
   }
 }

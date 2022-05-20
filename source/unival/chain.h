@@ -4,6 +4,7 @@
 #ifndef UNIVAL_CHAIN_H
 #define UNIVAL_CHAIN_H
 
+#include <optional>
 #include <span>
 #include <variant>
 #include <vector>
@@ -15,7 +16,7 @@ namespace unival {
 
     /*  Apply changes.
      */
-    auto commit() noexcept -> type_;
+    auto commit() noexcept -> std::optional<type_>;
 
     /*  Set vector element by index.
      */
@@ -46,12 +47,12 @@ namespace unival {
     using path_span_ =
         std::span<std::variant<signed long long, type_> const>;
 
-    static void _set(type_ &origin, path_span_ path,
-                     type_ const &value) noexcept;
+    static auto _set(type_ &origin, path_span_ path,
+                     type_ const &value) noexcept -> bool;
 
-    static void _resize(type_ &origin, path_span_ path,
+    static auto _resize(type_ &origin, path_span_ path,
                         signed long long size,
-                        type_ const &def) noexcept;
+                        type_ const &def) noexcept -> bool;
 
     struct set_ {
       type_ value;

@@ -4,6 +4,8 @@
 #include "unival.h"
 
 namespace unival {
+  using std::optional, std::nullopt;
+
   template <class... types_> struct overload : types_... {
     using types_::operator()...;
   };
@@ -16,15 +18,18 @@ namespace unival {
       : m_value(value) { }
 
   template <typename type_>
-  auto chain<type_>::commit() noexcept -> type_ {
+  auto chain<type_>::commit() noexcept -> optional<type_> {
     auto val = unival { std::move(m_value) };
     for (auto &op : m_ops)
-      std::visit(
-          overload { [&](set_ &v) { _set(val, op.path, v.value); },
-                     [&](resize_ &v) {
-                       _resize(val, op.path, v.size, v.def);
-                     } },
-          op.action);
+      if (!std::visit(overload { [&](set_ &v) {
+                                  return _set(val, op.path, v.value);
+                                },
+                                 [&](resize_ &v) {
+                                   return _resize(val, op.path,
+                                                  v.size, v.def);
+                                 } },
+                      op.action))
+        return nullopt;
     return val;
   }
 
@@ -83,48 +88,52 @@ namespace unival {
   }
 
   template <typename type_>
-  void chain<type_>::_set(type_ &origin, path_span_ path,
-                          type_ const &value) noexcept {
+  auto chain<type_>::_set(type_ &origin, path_span_ path,
+                          type_ const &value) noexcept -> bool {
     if (path.size() == 1)
-      std::visit(overload { [&](signed long long index) {
-                             origin._set(index, value);
-                           },
-                            [&](type_ const &key) {
-                              origin._set(key, value);
-                            } },
-                 path[0]);
-    else
-      std::visit(
-          overload { [&](signed long long index) {
-                      _set(origin._get(index),
-                           { path.begin() + 1, path.end() }, value);
-                    },
-                     [&](type_ const &key) {
-                       _set(origin._get(key),
-                            { path.begin() + 1, path.end() }, value);
-                     } },
-          path[0]);
+      return std::visit(overload { [&](signed long long index) {
+                                    return origin._set(index, value);
+                                  },
+                                   [&](type_ const &key) {
+                                     return origin._set(key, value);
+                                   } },
+                        path[0]);
+    return std::visit(
+        overload { [&](signed long long index) {
+                    if (!origin._check(index))
+                      return false;
+                    return _set(origin._get(index),
+                                { path.begin() + 1, path.end() },
+                                value);
+                  },
+                   [&](type_ const &key) {
+                     if (!origin._check(key))
+                       return false;
+                     return _set(origin._get(key),
+                                 { path.begin() + 1, path.end() },
+                                 value);
+                   } },
+        path[0]);
   }
 
   template <typename type_>
-  void chain<type_>::_resize(type_ &origin, path_span_ path,
+  auto chain<type_>::_resize(type_ &origin, path_span_ path,
                              signed long long size,
-                             type_ const &def) noexcept {
+                             type_ const &def) noexcept -> bool {
     if (path.empty())
-      origin._resize(size, def);
-    else
-      std::visit(overload { [&](signed long long index) {
-                             _resize(origin._get(index),
-                                     { path.begin() + 1, path.end() },
-                                     size, def);
-                           },
-                            [&](type_ const &key) {
-                              _resize(
-                                  origin._get(key),
-                                  { path.begin() + 1, path.end() },
-                                  size, def);
-                            } },
-                 path[0]);
+      return origin._resize(size, def);
+    return std::visit(
+        overload { [&](signed long long index) {
+                    return _resize(origin._get(index),
+                                   { path.begin() + 1, path.end() },
+                                   size, def);
+                  },
+                   [&](type_ const &key) {
+                     return _resize(origin._get(key),
+                                    { path.begin() + 1, path.end() },
+                                    size, def);
+                   } },
+        path[0]);
   }
 
   template class chain<unival>;

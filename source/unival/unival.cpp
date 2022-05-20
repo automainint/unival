@@ -195,10 +195,9 @@ namespace unival {
   auto unival::resize(signed long long size,
                       unival const &def) const noexcept
       -> std::optional<unival> {
-    if (!is_vector() || size < 0)
-      return nullopt;
     auto val = unival { *this };
-    val._resize(size, def);
+    if (!val._resize(size, def))
+      return nullopt;
     return val;
   }
 
@@ -248,6 +247,24 @@ namespace unival {
     return chain<unival> { *this };
   }
 
+  auto unival::_check(signed long long index) const noexcept -> bool {
+    if (!is_vector())
+      return false;
+    auto const &v = std::get<n_vector>(m_value);
+    return index >= 0 && index < v.size();
+  }
+
+  auto unival::_check(unival const &key) const noexcept -> bool {
+    if (!is_composite())
+      return false;
+    auto const &comp = std::get<n_composite>(m_value);
+    auto i = lower_bound(comp.begin(), comp.end(), key,
+                         [](auto const &value, auto const &key) {
+                           return value.first < key;
+                         });
+    return i != comp.end() && i->first == key;
+  }
+
   auto unival::_get(signed long long index) noexcept -> unival & {
     auto &v = std::get<n_vector>(m_value);
     return v[index];
@@ -270,7 +287,7 @@ namespace unival {
       return false;
     auto &v = std::get<n_vector>(m_value);
     if (index >= v.size())
-      v.resize(index + 1);
+      return false;
     v[index] = value;
     return true;
   }
@@ -291,9 +308,12 @@ namespace unival {
     return true;
   }
 
-  void unival::_resize(signed long long size,
-                       unival const &def) noexcept {
+  auto unival::_resize(signed long long size,
+                       unival const &def) noexcept -> bool {
+    if (!is_vector() || size < 0)
+      return false;
     auto &v = std::get<n_vector>(m_value);
     v.resize(size, def);
+    return true;
   }
 }

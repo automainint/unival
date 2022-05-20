@@ -6,7 +6,6 @@
 
 #include "chain.h"
 
-#include <optional>
 #include <string>
 
 namespace unival {
@@ -120,6 +119,7 @@ namespace unival {
      *    on(key) - move cursor to composite element by key;
      *    set(index, value) - set vector element by index;
      *    set(key, value) - set composite element by key;
+     *    resize(size, def) - resize vector;
      *    commit() - apply changes.
      *
      *  Usage:
@@ -133,17 +133,25 @@ namespace unival {
     [[nodiscard]] auto edit() const noexcept -> chain<unival>;
 
   private:
-    auto _get(signed long long index) noexcept -> unival &;
-
-    auto _get(unival const &key) noexcept -> unival &;
-
-    auto _set(signed long long index, unival const &value) noexcept
+    [[nodiscard]] auto _check(signed long long index) const noexcept
         -> bool;
 
-    auto _set(unival const &key, unival const &value) noexcept
+    [[nodiscard]] auto _check(unival const &key) const noexcept
         -> bool;
 
-    void _resize(signed long long size, unival const &def) noexcept;
+    [[nodiscard]] auto _get(signed long long index) noexcept
+        -> unival &;
+
+    [[nodiscard]] auto _get(unival const &key) noexcept -> unival &;
+
+    [[nodiscard]] auto _set(signed long long index,
+                            unival const &value) noexcept -> bool;
+
+    [[nodiscard]] auto _set(unival const &key,
+                            unival const &value) noexcept -> bool;
+
+    [[nodiscard]] auto _resize(signed long long size,
+                               unival const &def) noexcept -> bool;
 
     enum index_ {
       n_empty,
