@@ -34,25 +34,10 @@ namespace unival {
   }
 
   template <typename type_>
-  auto chain<type_>::set(signed long long index,
-                         type_ const &value) noexcept
+  auto chain<type_>::set(type_ const &value) noexcept
       -> chain<type_> {
     auto result = chain<type_> { std::move(*this) };
     auto path = result.m_cursor;
-    path.emplace_back(index);
-    result.m_cursor = path_ {};
-    result.m_ops.emplace_back(op_ {
-        .path = std::move(path), .action = set_ { .value = value } });
-    return result;
-  }
-
-  template <typename type_>
-  auto chain<type_>::set(type_ const &key,
-                         type_ const &value) noexcept
-      -> chain<type_> {
-    auto result = chain<type_> { std::move(*this) };
-    auto path = result.m_cursor;
-    path.emplace_back(type_ { key });
     result.m_cursor = path_ {};
     result.m_ops.emplace_back(op_ {
         .path = std::move(path), .action = set_ { .value = value } });
@@ -90,6 +75,10 @@ namespace unival {
   template <typename type_>
   auto chain<type_>::_set(type_ &origin, path_span_ path,
                           type_ const &value) noexcept -> bool {
+    if (path.empty()) {
+      origin = type_ { value };
+      return true;
+    }
     if (path.size() == 1)
       return std::visit(overload { [&](signed long long index) {
                                     return origin._set(index, value);

@@ -18,25 +18,21 @@ namespace unival {
      */
     auto commit() noexcept -> std::optional<type_>;
 
-    /*  Set vector element by index.
+    /*  Set value on the current cursor position and reset the cursor.
      */
-    auto set(signed long long index, type_ const &value) noexcept
-        -> chain<type_>;
+    auto set(type_ const &value) noexcept -> chain<type_>;
 
-    /*  Set composite element by key.
-     */
-    auto set(type_ const &key, type_ const &value) noexcept
-        -> chain<type_>;
-
-    /*  Move cursor to vector element by index.
+    /*  Move cursor to vector element by index relative to the current
+     *  cursor position.
      */
     auto on(signed long long index) noexcept -> chain<type_>;
 
-    /*  Move cursor to composite element by key.
+    /*  Move cursor to composite element by key relative to the
+     *  current cursor position.
      */
     auto on(type_ const &key) noexcept -> chain<type_>;
 
-    /*  Resize vector.
+    /*  Resize vector on the current cursor position.
      */
     auto resize(signed long long size,
                 type_ const &def = type_ {}) noexcept -> chain<type_>;
