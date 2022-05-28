@@ -112,14 +112,23 @@ namespace unival {
                            unival const &value) const noexcept
         -> std::optional<unival>;
 
+    /*  Remove vector element by index.
+     */
+    [[nodiscard]] auto remove(signed long long index) const noexcept
+        -> std::optional<unival>;
+
+    /*  Remove composite element by key.
+     */
+    [[nodiscard]] auto remove(unival const &key) const noexcept
+        -> std::optional<unival>;
+
     /*  Start edit chain.
      *
      *  Available chain methods:
      *    on(index) - move cursor to vector element by index;
      *    on(key) - move cursor to composite element by key;
-     *    set(index, value) - set vector element by index;
-     *    set(key, value) - set composite element by key;
-     *    resize(size, def) - resize vector;
+     *    set(value) - set value on current cursor;
+     *    resize(size, def) - resize vector on current cursor;
      *    commit() - apply changes.
      *
      *  Usage:
@@ -152,6 +161,11 @@ namespace unival {
 
     [[nodiscard]] auto _resize(signed long long size,
                                unival const &def) noexcept -> bool;
+
+    [[nodiscard]] auto _remove(signed long long index) noexcept
+        -> bool;
+
+    [[nodiscard]] auto _remove(unival const &key) noexcept -> bool;
 
     enum index_ {
       n_empty,

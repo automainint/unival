@@ -32,10 +32,16 @@ namespace unival {
      */
     auto on(type_ const &key) noexcept -> chain<type_>;
 
-    /*  Resize vector on the current cursor position.
+    /*  Resize vector on the current cursor position and reset the
+     *  cursor.
      */
     auto resize(signed long long size,
                 type_ const &def = type_ {}) noexcept -> chain<type_>;
+
+    /*  Remove element on the current cursor position and reset the
+     *  cursor.
+     */
+    auto remove() noexcept -> chain<type_>;
 
   private:
     using path_ = std::vector<std::variant<signed long long, type_>>;
@@ -50,6 +56,9 @@ namespace unival {
                         signed long long size,
                         type_ const &def) noexcept -> bool;
 
+    static auto _remove(type_ &origin, path_span_ path) noexcept
+        -> bool;
+
     struct set_ {
       type_ value;
     };
@@ -59,7 +68,9 @@ namespace unival {
       type_ def;
     };
 
-    using action_ = std::variant<set_, resize_>;
+    struct remove_ { };
+
+    using action_ = std::variant<set_, resize_, remove_>;
 
     struct op_ {
       path_ path;

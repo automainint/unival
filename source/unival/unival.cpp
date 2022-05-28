@@ -243,6 +243,22 @@ namespace unival {
     return val;
   }
 
+  auto unival::remove(signed long long index) const noexcept
+      -> optional<unival> {
+    auto val = unival { *this };
+    if (!val._remove(index))
+      return nullopt;
+    return val;
+  }
+
+  auto unival::remove(unival const &key) const noexcept
+      -> optional<unival> {
+    auto val = unival { *this };
+    if (!val._remove(key))
+      return nullopt;
+    return val;
+  }
+
   auto unival::edit() const noexcept -> chain<unival> {
     return chain<unival> { *this };
   }
@@ -294,8 +310,10 @@ namespace unival {
 
   auto unival::_set(unival const &key, unival const &value) noexcept
       -> bool {
-    if (!is_composite())
+    if (!is_composite() && !is_empty())
       return false;
+    if (!is_composite())
+      m_value = vector<pair<unival, unival>> {};
     auto &comp = std::get<n_composite>(m_value);
     auto i = lower_bound(comp.begin(), comp.end(), key,
                          [](auto const &value, auto const &key) {
@@ -310,10 +328,40 @@ namespace unival {
 
   auto unival::_resize(signed long long size,
                        unival const &def) noexcept -> bool {
-    if (!is_vector() || size < 0)
+    if (size < 0)
+      return false;
+    if (!is_vector() && !is_empty())
+      return false;
+    if (!is_vector())
+      m_value = vector<unival> { static_cast<size_t>(size), def };
+    else {
+      auto &v = std::get<n_vector>(m_value);
+      v.resize(size, def);
+    }
+    return true;
+  }
+
+  auto unival::_remove(signed long long index) noexcept -> bool {
+    if (!is_vector())
       return false;
     auto &v = std::get<n_vector>(m_value);
-    v.resize(size, def);
+    if (index < 0 || index >= v.size())
+      return false;
+    v.erase(v.begin() + index);
+    return true;
+  }
+
+  auto unival::_remove(unival const &key) noexcept -> bool {
+    if (!is_composite())
+      return false;
+    auto &comp = std::get<n_composite>(m_value);
+    auto i = lower_bound(comp.begin(), comp.end(), key,
+                         [](auto const &value, auto const &key) {
+                           return value.first < key;
+                         });
+    if (i == comp.end() || i->first != key)
+      return false;
+    comp.erase(i);
     return true;
   }
 }

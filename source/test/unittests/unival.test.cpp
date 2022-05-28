@@ -821,4 +821,181 @@ namespace unival::test {
                  .commit()
                  .has_value());
   }
+
+  TEST_CASE("can not remove vector element of int unival") {
+    auto val = unival { 1 };
+    REQUIRE(!val.remove(0).has_value());
+  }
+
+  TEST_CASE("can remove element of vector unival") {
+    auto val =
+        unival { vector<unival> { unival { 1 }, unival { 2 } } };
+    val = val.remove(0).value();
+    REQUIRE(val.get_size() == 1);
+    REQUIRE(val.get(0) == unival { 2 });
+  }
+
+  TEST_CASE("can not remove out of bounds element of vector unival") {
+    auto val =
+        unival { vector<unival> { unival { 1 }, unival { 2 } } };
+    REQUIRE(!val.remove(2).has_value());
+    REQUIRE(!val.remove(-1).has_value());
+  }
+
+  TEST_CASE("can not remove composite element of int unival") {
+    auto val = unival { 1 };
+    REQUIRE(!val.remove(unival { 0 }).has_value());
+  }
+
+  TEST_CASE("can remove element of composite unival") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } } } };
+    val = val.remove(unival { 1 }).value();
+    REQUIRE(val.get_size() == 1);
+    REQUIRE(val.get(unival { 3 }) == unival { 4 });
+  }
+
+  TEST_CASE(
+      "can not remove out of bounds element of composite unival") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } } } };
+    REQUIRE(!val.remove(unival { 2 }).has_value());
+    REQUIRE(!val.remove(unival { -1 }).has_value());
+    REQUIRE(!val.remove(unival { 4 }).has_value());
+  }
+
+  TEST_CASE("can not edit and remove vector element of int unival") {
+    auto val = unival { 1 };
+    REQUIRE(!val.edit().on(0).remove().commit().has_value());
+  }
+
+  TEST_CASE("can edit and remove element of vector unival") {
+    auto val =
+        unival { vector<unival> { unival { 1 }, unival { 2 } } };
+    val = val.edit().on(0).remove().commit().value();
+    REQUIRE(val.get_size() == 1);
+    REQUIRE(val.get(0) == unival { 2 });
+  }
+
+  TEST_CASE("can not edit and remove out of bounds element of vector "
+            "unival") {
+    auto val =
+        unival { vector<unival> { unival { 1 }, unival { 2 } } };
+    REQUIRE(!val.edit().on(2).remove().commit().has_value());
+    REQUIRE(!val.edit().on(-1).remove().commit().has_value());
+  }
+
+  TEST_CASE(
+      "can not edit and remove composite element of int unival") {
+    auto val = unival { 1 };
+    REQUIRE(
+        !val.edit().on(unival { 0 }).remove().commit().has_value());
+  }
+
+  TEST_CASE("can edit and remove element of composite unival") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } } } };
+    val = val.edit().on(unival { 1 }).remove().commit().value();
+    REQUIRE(val.get_size() == 1);
+    REQUIRE(val.get(unival { 3 }) == unival { 4 });
+  }
+
+  TEST_CASE("can not edit and remove out of bounds element of "
+            "composite unival") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } } } };
+    REQUIRE(
+        !val.edit().on(unival { 2 }).remove().commit().has_value());
+    REQUIRE(
+        !val.edit().on(unival { -1 }).remove().commit().has_value());
+    REQUIRE(
+        !val.edit().on(unival { 4 }).remove().commit().has_value());
+  }
+
+  TEST_CASE(
+      "can not edit and remove element on root cursor position") {
+    auto val = unival { 1 };
+    REQUIRE(!val.edit().remove().commit().has_value());
+  }
+
+  TEST_CASE("edit and resize vector will reset cursor position") {
+    auto val =
+        unival { vector<unival> { unival { 1 }, unival { 2 } } };
+    val = val.edit()
+              .resize(3, unival { 2 })
+              .on(2)
+              .set(unival { 3 })
+              .commit()
+              .value();
+    REQUIRE(val == unival { vector<unival> {
+                       unival { 1 }, unival { 2 }, unival { 3 } } });
+  }
+
+  TEST_CASE(
+      "edit and remove vector element will reset cursor position") {
+    auto val = unival { vector<unival> { unival { 1 }, unival { 2 },
+                                         unival { 3 } } };
+    val = val.edit()
+              .on(1)
+              .remove()
+              .on(1)
+              .set(unival { 2 })
+              .commit()
+              .value();
+    REQUIRE(val ==
+            unival { vector<unival> { unival { 1 }, unival { 2 } } });
+  }
+
+  TEST_CASE("edit and remove composite element will reset cursor "
+            "position") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } } } };
+    val = val.edit()
+              .on(unival { 1 })
+              .remove()
+              .on(unival { 5 })
+              .set(unival { 6 })
+              .commit()
+              .value();
+    REQUIRE(val == unival { vector<pair<unival, unival>> {
+                       pair { unival { 3 }, unival { 4 } },
+                       pair { unival { 5 }, unival { 6 } } } });
+  }
+
+  TEST_CASE("can use empty unival as vector") {
+    auto val = unival {};
+    val = val.resize(3, unival { 1 }).value();
+    REQUIRE(val == unival { vector<unival> {
+                       unival { 1 }, unival { 1 }, unival { 1 } } });
+  }
+
+  TEST_CASE("can use empty unival as composite") {
+    auto val = unival {};
+    val = val.set(unival { 0 }, unival { 1 }).value();
+    REQUIRE(val == unival { vector<pair<unival, unival>> {
+                       pair { unival { 0 }, unival { 1 } } } });
+  }
+
+  TEST_CASE("can edit empty unival as vector") {
+    auto val = unival {};
+    val = val.edit().resize(3, unival { 1 }).commit().value();
+    REQUIRE(val == unival { vector<unival> {
+                       unival { 1 }, unival { 1 }, unival { 1 } } });
+  }
+
+  TEST_CASE("can edit empty unival as composite") {
+    auto val = unival {};
+    val = val.edit()
+              .on(unival { 0 })
+              .set(unival { 1 })
+              .commit()
+              .value();
+    REQUIRE(val == unival { vector<pair<unival, unival>> {
+                       pair { unival { 0 }, unival { 1 } } } });
+  }
 }
