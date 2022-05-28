@@ -998,4 +998,35 @@ namespace unival::test {
     REQUIRE(val == unival { vector<pair<unival, unival>> {
                        pair { unival { 0 }, unival { 1 } } } });
   }
+
+  TEST_CASE("edit and remove element of nested composite") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 },
+               unival { vector<pair<unival, unival>> {
+                   pair { unival { 4 }, unival { 5 } },
+                   pair { unival { 6 }, unival { 7 } } } } } } };
+    val = val.edit()
+              .on(unival { 3 })
+              .on(unival { 4 })
+              .remove()
+              .commit()
+              .value();
+    REQUIRE(val ==
+            unival { vector<pair<unival, unival>> {
+                pair { unival { 1 }, unival { 2 } },
+                pair { unival { 3 },
+                       unival { vector<pair<unival, unival>> { pair {
+                           unival { 6 }, unival { 7 } } } } } } });
+  }
+
+  TEST_CASE("edit and remove element of nested vector") {
+    auto val = unival { vector<unival> {
+        unival { 1 },
+        unival { vector<unival> { unival { 2 }, unival { 3 } } } } };
+    val = val.edit().on(1).on(0).remove().commit().value();
+    REQUIRE(val == unival { vector<unival> {
+                       unival { 1 }, unival { vector<unival> {
+                                         unival { 3 } } } } });
+  }
 }

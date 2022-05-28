@@ -128,6 +128,7 @@ namespace unival {
      *    on(index) - move cursor to vector element by index;
      *    on(key) - move cursor to composite element by key;
      *    set(value) - set value on current cursor;
+     *    remove() - remove value on current cursor;
      *    resize(size, def) - resize vector on current cursor;
      *    commit() - apply changes.
      *
