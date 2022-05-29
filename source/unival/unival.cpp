@@ -192,6 +192,11 @@ namespace unival {
     return nullopt;
   }
 
+  auto unival::resize(signed long long size) const noexcept
+      -> std::optional<unival> {
+    return resize(size, unival {});
+  }
+
   auto unival::resize(signed long long size,
                       unival const &def) const noexcept
       -> std::optional<unival> {
@@ -261,6 +266,16 @@ namespace unival {
 
   auto unival::edit() const noexcept -> chain<unival> {
     return chain<unival> { *this };
+  }
+
+  auto unival::begin() const noexcept -> iterator<unival> {
+    return iterator<unival> { this, 0 };
+  }
+
+  auto unival::end() const noexcept -> iterator<unival> {
+    auto size = get_size();
+    return iterator<unival> { this,
+                              size.has_value() ? size.value() : 0 };
   }
 
   auto unival::_check(signed long long index) const noexcept -> bool {

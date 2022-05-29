@@ -1,4 +1,4 @@
 target_sources(
   ${UNIVAL_TEST}
     PRIVATE
-      unival.test.cpp)
+      iterator.test.cpp chain.test.cpp unival.test.cpp)

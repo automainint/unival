@@ -1,6 +1,6 @@
 target_sources(
   ${UNIVAL_TEST}
     PRIVATE
-      chain.cpp unival.cpp
+      chain.cpp unival.cpp iterator.cpp
     PUBLIC
-      unival.h chain.h)
+      unival.h iterator.h chain.h)

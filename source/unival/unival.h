@@ -5,6 +5,7 @@
 #define UNIVAL_UNIVAL_H
 
 #include "chain.h"
+#include "iterator.h"
 
 #include <string>
 
@@ -12,8 +13,14 @@ namespace unival {
   class unival {
   public:
     friend class chain<unival>;
+    friend class iterator<unival>;
 
     unival() noexcept = default;
+    unival(unival const &) noexcept = default;
+    unival(unival &&) noexcept = default;
+    auto operator=(unival const &) noexcept -> unival & = default;
+    auto operator=(unival &&) noexcept -> unival & = default;
+
     explicit unival(std::optional<unival> opt) noexcept;
     auto operator=(std::optional<unival> opt) noexcept -> unival &;
 
@@ -86,8 +93,15 @@ namespace unival {
     [[nodiscard]] auto get_size() const noexcept
         -> std::optional<signed long long>;
 
+    /*  Resize vector.
+     */
+    [[nodiscard]] auto resize(signed long long size) const noexcept
+        -> std::optional<unival>;
+
+    /*  Resize vector with default element value.
+     */
     [[nodiscard]] auto resize(signed long long size,
-                              unival const &def = {}) const noexcept
+                              unival const &def) const noexcept
         -> std::optional<unival>;
 
     /*  Get vector element by index.
@@ -142,6 +156,9 @@ namespace unival {
      */
     [[nodiscard]] auto edit() const noexcept -> chain<unival>;
 
+    [[nodiscard]] auto begin() const noexcept -> iterator<unival>;
+    [[nodiscard]] auto end() const noexcept -> iterator<unival>;
+
   private:
     [[nodiscard]] auto _check(signed long long index) const noexcept
         -> bool;
@@ -179,12 +196,20 @@ namespace unival {
       n_composite
     };
 
+    using bytes_ = std::vector<int8_t>;
+    using vector_ = std::vector<unival>;
     using composite_ = std::vector<std::pair<unival, unival>>;
 
-    std::variant<std::monostate, bool, signed long long, double,
-                 std::u8string, std::vector<int8_t>,
-                 std::vector<unival>, composite_>
-        m_value = std::monostate {};
+    using value_type_ =
+        std::variant<std::monostate, bool, signed long long, double,
+                     std::u8string, bytes_, vector_, composite_>;
+
+    value_type_ m_value;
+
+    static void _magic_side_effect() {
+      //  GCC bug workaround.
+      auto _ = std::optional<unival> { unival {} };
+    }
   };
 }
 

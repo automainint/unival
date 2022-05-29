@@ -4,6 +4,8 @@ if(NOT DEFINED CMAKE_BUILD_PARALLEL_LEVEL)
   set(CMAKE_BUILD_PARALLEL_LEVEL 3)
 endif()
 
+set(CMAKE_CXX_STANDARD 20)
+
 set(UNIVAL_PROJECT unival)
 set(UNIVAL_TEST unival-test)
 set(UNIVAL_UNITTESTS unival-unittests)
@@ -24,16 +26,17 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2)
 
 add_executable(${UNIVAL_TEST})
-target_compile_features(${UNIVAL_TEST} PRIVATE cxx_std_20)
 target_link_libraries(${UNIVAL_TEST} PRIVATE Catch2::Catch2)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   target_compile_options(
     ${UNIVAL_TEST} PRIVATE
-    -fsanitize=undefined,address --coverage -O0 -g)
+    #-fsanitize=undefined,address
+    --coverage -O0 -g)
   target_link_options(
     ${UNIVAL_TEST} PRIVATE
-    -fsanitize=undefined,address --coverage)
+    #-fsanitize=undefined,address
+    --coverage)
 endif()
 
 if(MSVC)

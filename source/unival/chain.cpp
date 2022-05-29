@@ -139,7 +139,7 @@ namespace unival {
   }
 
   template <typename type_>
-   auto chain<type_>::_remove(type_ &origin, path_span_ path) noexcept
+  auto chain<type_>::_remove(type_ &origin, path_span_ path) noexcept
       -> bool {
     if (path.empty())
       return false;
@@ -152,7 +152,7 @@ namespace unival {
                                    } },
                         path[0]);
     return std::visit(
-            overload { [&](signed long long index) {
+        overload { [&](signed long long index) {
                     if (!origin._check(index))
                       return false;
                     return _remove(origin._get(index),
