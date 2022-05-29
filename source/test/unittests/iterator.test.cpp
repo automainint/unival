@@ -15,8 +15,19 @@ namespace unival::test {
       REQUIRE(false);
   }
 
-  TEST_CASE("get value from end iterator") {
+  TEST_CASE("get value from end iterator of int") {
     auto val = unival { 1 };
+    REQUIRE((*val.end()).is_empty());
+  }
+
+  TEST_CASE("get value from end iterator of vector") {
+    auto val = unival { vector<unival> { unival { 1 } } };
+    REQUIRE((*val.end()).is_empty());
+  }
+
+  TEST_CASE("get value from end iterator of composite") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } } } };
     REQUIRE((*val.end()).is_empty());
   }
 
@@ -38,5 +49,19 @@ namespace unival::test {
     for (auto x : val)
       REQUIRE(x == unival { i += 2 });
     REQUIRE(i == 5);
+  }
+
+  TEST_CASE(
+      "iterator from out of bounds index will return empty unival") {
+    auto val = unival { vector<unival> { unival { 1 } } };
+    auto i = iterator<unival> { val, -1 };
+    auto j = iterator<unival> { val, 2 };
+    REQUIRE((*i).is_empty());
+    REQUIRE((*j).is_empty());
+  }
+
+  TEST_CASE("use arrow with iterator of vector unival") {
+    auto val = unival { vector<unival> { unival { 1 } } };
+    REQUIRE(val.begin()->get_integer() == 1);
   }
 }

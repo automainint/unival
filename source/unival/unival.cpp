@@ -269,12 +269,12 @@ namespace unival {
   }
 
   auto unival::begin() const noexcept -> iterator<unival> {
-    return iterator<unival> { this, 0 };
+    return iterator<unival> { *this, 0 };
   }
 
   auto unival::end() const noexcept -> iterator<unival> {
     auto size = get_size();
-    return iterator<unival> { this,
+    return iterator<unival> { *this,
                               size.has_value() ? size.value() : 0 };
   }
 
