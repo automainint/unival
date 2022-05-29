@@ -15,6 +15,11 @@ namespace unival::test {
       REQUIRE(false);
   }
 
+  TEST_CASE("get value from end iterator") {
+    auto val = unival { 1 };
+    REQUIRE((*val.end()).is_empty());
+  }
+
   TEST_CASE("can iterate over vector unival") {
     auto val = unival { vector<unival> { unival { 1 }, unival { 2 },
                                          unival { 3 } } };
