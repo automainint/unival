@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-option(UNIVAL_ENABLE_TESTS "Enable tests" ON)
+option(UNIVAL_ENABLE_TESTING "Enable testing" ON)
 
 set(UNIVAL_PROJECT unival)
 set(UNIVAL_LIBRARY unival)
@@ -27,7 +27,7 @@ target_compile_features(${UNIVAL_LIBRARY} PUBLIC cxx_std_20)
 
 enable_testing()
 
-if(UNIVAL_ENABLE_TESTS)
+if(UNIVAL_ENABLE_TESTING)
   include(FetchContent)
 
   FetchContent_Declare(
