@@ -16,13 +16,11 @@ namespace unival {
     friend class iterator<unival>;
 
     unival() noexcept = default;
+    ~unival() noexcept = default;
     unival(unival const &) noexcept = default;
     unival(unival &&) noexcept = default;
     auto operator=(unival const &) noexcept -> unival & = default;
     auto operator=(unival &&) noexcept -> unival & = default;
-
-    explicit unival(std::optional<unival> opt) noexcept;
-    auto operator=(std::optional<unival> opt) noexcept -> unival &;
 
     explicit unival(bool value) noexcept;
     explicit unival(signed char value) noexcept;
@@ -67,6 +65,7 @@ namespace unival {
         -> bool;
 
     [[nodiscard]] auto is_empty() const noexcept -> bool;
+    [[nodiscard]] auto is_error() const noexcept -> bool;
     [[nodiscard]] auto is_boolean() const noexcept -> bool;
     [[nodiscard]] auto is_integer() const noexcept -> bool;
     [[nodiscard]] auto is_float() const noexcept -> bool;
@@ -90,51 +89,50 @@ namespace unival {
 
     /*  Get vector or composite element count.
      */
-    [[nodiscard]] auto get_size() const noexcept
-        -> std::optional<signed long long>;
+    [[nodiscard]] auto get_size() const noexcept -> signed long long;
 
     /*  Resize vector.
      */
     [[nodiscard]] auto resize(signed long long size) const noexcept
-        -> std::optional<unival>;
+        -> unival;
 
     /*  Resize vector with default element value.
      */
     [[nodiscard]] auto resize(signed long long size,
                               unival const &def) const noexcept
-        -> std::optional<unival>;
+        -> unival;
 
     /*  Get vector element by index.
      */
     [[nodiscard]] auto get(signed long long index) const noexcept
-        -> std::optional<unival>;
+        -> unival;
 
     /*  Get composite element by key.
      */
     [[nodiscard]] auto get(unival const &key) const noexcept
-        -> std::optional<unival>;
+        -> unival;
 
     /*  Set vector element by index.
      */
     [[nodiscard]] auto set(signed long long index,
                            unival const &value) const noexcept
-        -> std::optional<unival>;
+        -> unival;
 
     /*  Set composite element by key.
      */
     [[nodiscard]] auto set(unival const &key,
                            unival const &value) const noexcept
-        -> std::optional<unival>;
+        -> unival;
 
     /*  Remove vector element by index.
      */
     [[nodiscard]] auto remove(signed long long index) const noexcept
-        -> std::optional<unival>;
+        -> unival;
 
     /*  Remove composite element by key.
      */
     [[nodiscard]] auto remove(unival const &key) const noexcept
-        -> std::optional<unival>;
+        -> unival;
 
     /*  Start edit chain.
      *
@@ -160,6 +158,8 @@ namespace unival {
     [[nodiscard]] auto end() const noexcept -> iterator<unival>;
 
   private:
+    [[nodiscard]] static auto _error() noexcept -> unival;
+
     [[nodiscard]] auto _check(signed long long index) const noexcept
         -> bool;
 
@@ -187,6 +187,7 @@ namespace unival {
 
     enum index_ {
       n_empty,
+      n_error,
       n_boolean,
       n_integer,
       n_float,
@@ -196,20 +197,20 @@ namespace unival {
       n_composite
     };
 
+    struct error_ {
+      auto operator<=>(error_ const &) const noexcept = default;
+    };
+
     using bytes_ = std::vector<int8_t>;
     using vector_ = std::vector<unival>;
     using composite_ = std::vector<std::pair<unival, unival>>;
 
     using value_type_ =
-        std::variant<std::monostate, bool, signed long long, double,
-                     std::u8string, bytes_, vector_, composite_>;
+        std::variant<std::monostate, error_, bool, signed long long,
+                     double, std::u8string, bytes_, vector_,
+                     composite_>;
 
     value_type_ m_value;
-
-    static void _magic_side_effect() {
-      //  GCC bug workaround.
-      auto _ = std::optional<unival> { unival {} };
-    }
   };
 }
 

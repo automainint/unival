@@ -10,21 +10,6 @@ namespace unival {
       std::u8string_view, std::vector, std::span, std::pair,
       std::lower_bound, std::sort;
 
-  unival::unival(optional<unival> opt) noexcept {
-    if (opt.has_value())
-      m_value = opt->m_value;
-  }
-
-  auto unival::operator=(optional<unival> opt) noexcept -> unival & {
-    if (opt.has_value())
-      // gcc-11 bug
-      // m_value = opt->m_value;
-      *this = *opt;
-    else
-      m_value = std::monostate {};
-    return *this;
-  }
-
   unival::unival(bool value) noexcept : m_value(value) { }
 
   unival::unival(signed char value) noexcept
@@ -113,6 +98,10 @@ namespace unival {
     return m_value.index() == n_empty;
   }
 
+  auto unival::is_error() const noexcept -> bool {
+    return m_value.index() == n_error;
+  }
+
   auto unival::is_boolean() const noexcept -> bool {
     return m_value.index() == n_boolean;
   }
@@ -183,84 +172,79 @@ namespace unival {
     return span<int8_t const> { v.begin(), v.end() };
   }
 
-  auto unival::get_size() const noexcept
-      -> optional<signed long long> {
+  auto unival::get_size() const noexcept -> signed long long {
     if (is_vector())
-      return std::get<n_vector>(m_value).size();
+      return static_cast<signed long long>(
+          std::get<n_vector>(m_value).size());
     if (is_composite())
-      return std::get<n_composite>(m_value).size();
-    return nullopt;
+      return static_cast<signed long long>(
+          std::get<n_composite>(m_value).size());
+    return 0;
   }
 
   auto unival::resize(signed long long size) const noexcept
-      -> std::optional<unival> {
+      -> unival {
     return resize(size, unival {});
   }
 
   auto unival::resize(signed long long size,
-                      unival const &def) const noexcept
-      -> std::optional<unival> {
+                      unival const &def) const noexcept -> unival {
     auto val = unival { *this };
     if (!val._resize(size, def))
-      return nullopt;
+      return _error();
     return val;
   }
 
-  auto unival::get(signed long long index) const noexcept
-      -> optional<unival> {
+  auto unival::get(signed long long index) const noexcept -> unival {
     if (!is_vector())
-      return nullopt;
+      return _error();
     auto const &v = std::get<n_vector>(m_value);
     if (index < 0 || index >= v.size())
-      return nullopt;
+      return _error();
     return v[index];
   }
 
-  auto unival::get(unival const &key) const noexcept
-      -> optional<unival> {
+  auto unival::get(unival const &key) const noexcept -> unival {
     if (!is_composite())
-      return nullopt;
+      return _error();
     auto const &comp = std::get<n_composite>(m_value);
     auto i = lower_bound(comp.begin(), comp.end(), key,
                          [](auto const &value, auto const &key) {
                            return value.first < key;
                          });
     if (i == comp.end() || i->first != key)
-      return nullopt;
+      return _error();
     return i->second;
   }
 
   auto unival::set(signed long long index,
-                   unival const &value) const noexcept
-      -> optional<unival> {
+                   unival const &value) const noexcept -> unival {
     auto val = unival { *this };
     if (!val._set(index, value))
-      return nullopt;
+      return _error();
     return val;
   }
 
   auto unival::set(unival const &key,
-                   unival const &value) const noexcept
-      -> optional<unival> {
+                   unival const &value) const noexcept -> unival {
     auto val = unival { *this };
     if (!val._set(key, value))
-      return nullopt;
+      return _error();
     return val;
   }
 
   auto unival::remove(signed long long index) const noexcept
-      -> optional<unival> {
+      -> unival {
     auto val = unival { *this };
     if (!val._remove(index))
-      return nullopt;
+      return _error();
     return val;
   }
 
-  auto unival::remove(unival const &key) const noexcept
-      -> optional<unival> {
+  auto unival::remove(unival const &key) const noexcept -> unival {
     auto val = unival { *this };
     if (!val._remove(key))
-      return nullopt;
+      return _error();
     return val;
   }
 
@@ -273,9 +257,13 @@ namespace unival {
   }
 
   auto unival::end() const noexcept -> iterator<unival> {
-    auto size = get_size();
-    return iterator<unival> { *this,
-                              size.has_value() ? size.value() : 0 };
+    return iterator<unival> { *this, get_size() };
+  }
+
+  auto unival::_error() noexcept -> unival {
+    auto val = unival {};
+    val.m_value = error_ {};
+    return val;
   }
 
   auto unival::_check(signed long long index) const noexcept -> bool {

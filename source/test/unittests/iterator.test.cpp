@@ -15,20 +15,20 @@ namespace unival::test {
       REQUIRE(false);
   }
 
-  TEST_CASE("get value from end iterator of int") {
+  TEST_CASE("can not get value from end iterator of int") {
     auto val = unival { 1 };
-    REQUIRE((*val.end()).is_empty());
+    REQUIRE((*val.end()).is_error());
   }
 
-  TEST_CASE("get value from end iterator of vector") {
+  TEST_CASE("can not get value from end iterator of vector") {
     auto val = unival { vector<unival> { unival { 1 } } };
-    REQUIRE((*val.end()).is_empty());
+    REQUIRE((*val.end()).is_error());
   }
 
-  TEST_CASE("get value from end iterator of composite") {
+  TEST_CASE("can not get value from end iterator of composite") {
     auto val = unival { vector<pair<unival, unival>> {
         pair { unival { 1 }, unival { 2 } } } };
-    REQUIRE((*val.end()).is_empty());
+    REQUIRE((*val.end()).is_error());
   }
 
   TEST_CASE("can iterate over vector unival") {
@@ -51,13 +51,12 @@ namespace unival::test {
     REQUIRE(i == 5);
   }
 
-  TEST_CASE(
-      "iterator from out of bounds index will return empty unival") {
+  TEST_CASE("iterator from out of bounds index will return error") {
     auto val = unival { vector<unival> { unival { 1 } } };
     auto i = iterator<unival> { val, -1 };
     auto j = iterator<unival> { val, 2 };
-    REQUIRE((*i).is_empty());
-    REQUIRE((*j).is_empty());
+    REQUIRE((*i).is_error());
+    REQUIRE((*j).is_error());
   }
 
   TEST_CASE("use arrow with iterator of vector unival") {

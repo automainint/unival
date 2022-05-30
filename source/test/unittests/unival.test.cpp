@@ -17,20 +17,19 @@ namespace unival::test {
     REQUIRE(val.is_empty());
   }
 
-  TEST_CASE("unival created from nullopt") {
-    auto val = unival { optional<unival> {} };
-    REQUIRE(val.is_empty());
-  }
-
-  TEST_CASE("unival assigned to nullopt") {
+  TEST_CASE("unival is not error by default") {
     auto val = unival {};
-    val = optional<unival> {};
-    REQUIRE(val.is_empty());
+    REQUIRE(!val.is_error());
   }
 
   TEST_CASE("unival is not empty when assigned to a value") {
     auto val = unival { 42 };
     REQUIRE(!val.is_empty());
+  }
+
+  TEST_CASE("unival is not error when assigned to a value") {
+    auto val = unival { 42 };
+    REQUIRE(!val.is_error());
   }
 
   TEST_CASE("create unival from char") {
@@ -98,12 +97,6 @@ namespace unival::test {
   TEST_CASE("create unival from double") {
     auto val = unival { 424242.42 };
     REQUIRE(val.get_float() == Approx(424242.42));
-  }
-
-  TEST_CASE("create unival from optional") {
-    auto foo = optional<unival> { unival { 42 } };
-    auto bar = unival { foo };
-    REQUIRE(bar.get_integer() == 42);
   }
 
   TEST_CASE("get uint from int") {
@@ -239,21 +232,21 @@ namespace unival::test {
     auto vec = vector<unival> { unival { 42 } };
     auto val = unival { vec };
 
-    REQUIRE(val.get(0).value().get_integer() == 42);
+    REQUIRE(val.get(0).get_integer() == 42);
   }
 
   TEST_CASE("can not get unival vector out of bounds value") {
     auto vec = vector<unival> { unival { 42 } };
     auto val = unival { vec };
 
-    REQUIRE(!val.get(-1).has_value());
-    REQUIRE(!val.get(1).has_value());
+    REQUIRE(val.get(-1).is_error());
+    REQUIRE(val.get(1).is_error());
   }
 
   TEST_CASE("can not get unival vector value from int") {
     auto val = unival { 42 };
 
-    REQUIRE(!val.get(0).has_value());
+    REQUIRE(val.get(0).is_error());
   }
 
   TEST_CASE("can get unival 1-vector size") {
@@ -271,10 +264,10 @@ namespace unival::test {
     REQUIRE(val.get_size() == 3);
   }
 
-  TEST_CASE("can not get unival vector size from int") {
+  TEST_CASE("size of unival int is zero") {
     auto val = unival { 42 };
 
-    REQUIRE(!val.get_size().has_value());
+    REQUIRE(val.get_size() == 0);
   }
 
   TEST_CASE("is vector when created from vector") {
@@ -430,7 +423,7 @@ namespace unival::test {
 
   TEST_CASE("can not get composite element from int unival") {
     auto val = unival { 42 };
-    REQUIRE(!val.get(unival { 1 }).has_value());
+    REQUIRE(val.get(unival { 1 }).is_error());
   }
 
   TEST_CASE("can not get out of bounds composite unival element") {
@@ -438,8 +431,8 @@ namespace unival::test {
         pair { unival { 1 }, unival { 2 } },
         pair { unival { 3 }, unival { 4 } },
         pair { unival { 5 }, unival { 6 } } } };
-    REQUIRE(!val.get(unival { 2 }).has_value());
-    REQUIRE(!val.get(unival { 7 }).has_value());
+    REQUIRE(val.get(unival { 2 }).is_error());
+    REQUIRE(val.get(unival { 7 }).is_error());
   }
 
   TEST_CASE("create unival from std::string") {
@@ -465,14 +458,14 @@ namespace unival::test {
 
   TEST_CASE("can not set vector element of int unival") {
     auto val = unival { 42 };
-    REQUIRE(!val.set(0, unival { 1 }).has_value());
+    REQUIRE(val.set(0, unival { 1 }).is_error());
   }
 
   TEST_CASE("can not set out of bounds vector unival element") {
     auto val =
         unival { vector<unival> { unival { 1 }, unival { 2 } } };
-    REQUIRE(!val.set(-1, unival { 1 }).has_value());
-    REQUIRE(!val.set(3, unival { 1 }).has_value());
+    REQUIRE(val.set(-1, unival { 1 }).is_error());
+    REQUIRE(val.set(3, unival { 1 }).is_error());
   }
 
   TEST_CASE("can resize vector unival") {
@@ -488,12 +481,12 @@ namespace unival::test {
   TEST_CASE("can not resize vector unival to negative size") {
     auto val =
         unival { vector<unival> { unival { 1 }, unival { 2 } } };
-    REQUIRE(!val.resize(-1).has_value());
+    REQUIRE(val.resize(-1).is_error());
   }
 
   TEST_CASE("can not resize int unival") {
     auto val = unival { 42 };
-    REQUIRE(!val.resize(1).has_value());
+    REQUIRE(val.resize(1).is_error());
   }
 
   TEST_CASE("set composite unival element") {
@@ -523,18 +516,18 @@ namespace unival::test {
 
   TEST_CASE("can not set composite element of int unival") {
     auto val = unival { 42 };
-    REQUIRE(!val.set(unival { 1 }, unival { 1 }).has_value());
+    REQUIRE(val.set(unival { 1 }, unival { 1 }).is_error());
   }
 
   TEST_CASE("can not remove vector element of int unival") {
     auto val = unival { 1 };
-    REQUIRE(!val.remove(0).has_value());
+    REQUIRE(val.remove(0).is_error());
   }
 
   TEST_CASE("can remove element of vector unival") {
     auto val =
         unival { vector<unival> { unival { 1 }, unival { 2 } } };
-    val = val.remove(0).value();
+    val = val.remove(0);
     REQUIRE(val.get_size() == 1);
     REQUIRE(val.get(0) == unival { 2 });
   }
@@ -542,20 +535,20 @@ namespace unival::test {
   TEST_CASE("can not remove out of bounds element of vector unival") {
     auto val =
         unival { vector<unival> { unival { 1 }, unival { 2 } } };
-    REQUIRE(!val.remove(2).has_value());
-    REQUIRE(!val.remove(-1).has_value());
+    REQUIRE(val.remove(2).is_error());
+    REQUIRE(val.remove(-1).is_error());
   }
 
   TEST_CASE("can not remove composite element of int unival") {
     auto val = unival { 1 };
-    REQUIRE(!val.remove(unival { 0 }).has_value());
+    REQUIRE(val.remove(unival { 0 }).is_error());
   }
 
   TEST_CASE("can remove element of composite unival") {
     auto val = unival { vector<pair<unival, unival>> {
         pair { unival { 1 }, unival { 2 } },
         pair { unival { 3 }, unival { 4 } } } };
-    val = val.remove(unival { 1 }).value();
+    val = val.remove(unival { 1 });
     REQUIRE(val.get_size() == 1);
     REQUIRE(val.get(unival { 3 }) == unival { 4 });
   }
@@ -565,21 +558,21 @@ namespace unival::test {
     auto val = unival { vector<pair<unival, unival>> {
         pair { unival { 1 }, unival { 2 } },
         pair { unival { 3 }, unival { 4 } } } };
-    REQUIRE(!val.remove(unival { 2 }).has_value());
-    REQUIRE(!val.remove(unival { -1 }).has_value());
-    REQUIRE(!val.remove(unival { 4 }).has_value());
+    REQUIRE(val.remove(unival { 2 }).is_error());
+    REQUIRE(val.remove(unival { -1 }).is_error());
+    REQUIRE(val.remove(unival { 4 }).is_error());
   }
 
   TEST_CASE("can use empty unival as vector") {
     auto val = unival {};
-    val = val.resize(3, unival { 1 }).value();
+    val = val.resize(3, unival { 1 });
     REQUIRE(val == unival { vector<unival> {
                        unival { 1 }, unival { 1 }, unival { 1 } } });
   }
 
   TEST_CASE("can use empty unival as composite") {
     auto val = unival {};
-    val = val.set(unival { 0 }, unival { 1 }).value();
+    val = val.set(unival { 0 }, unival { 1 });
     REQUIRE(val == unival { vector<pair<unival, unival>> {
                        pair { unival { 0 }, unival { 1 } } } });
   }

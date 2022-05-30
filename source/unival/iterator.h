@@ -18,8 +18,6 @@ namespace unival {
     operator==(iterator const &other) const noexcept -> bool;
 
   private:
-    static auto _size(type_ const &val) noexcept -> signed long long;
-
     type_ const *m_value = nullptr;
     signed long long m_index = 0;
   };

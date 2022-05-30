@@ -16,7 +16,7 @@ namespace unival {
 
     /*  Apply changes.
      */
-    auto commit() noexcept -> std::optional<type_>;
+    auto commit() noexcept -> type_;
 
     /*  Set value on the current cursor position and reset the cursor.
      */

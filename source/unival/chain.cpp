@@ -18,7 +18,7 @@ namespace unival {
       : m_value(value) { }
 
   template <typename type_>
-  auto chain<type_>::commit() noexcept -> optional<type_> {
+  auto chain<type_>::commit() noexcept -> type_ {
     auto val = unival { std::move(m_value) };
     for (auto &op : m_ops)
       if (!std::visit(overload { [&](set_ &v) {
@@ -32,7 +32,7 @@ namespace unival {
                                    return _remove(val, op.path);
                                  } },
                       op.action))
-        return nullopt;
+        return unival::_error();
     return val;
   }
 
