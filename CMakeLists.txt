@@ -8,6 +8,9 @@ set(UNIVAL_PROJECT unival)
 set(UNIVAL_LIBRARY unival)
 set(UNIVAL_TEST unival-test)
 set(UNIVAL_UNITTESTS unival-unittests)
+set(UNIVAL_COMPONENT_DEVELOPMENT unival-development)
+set(UNIVAL_COMPONENT_RUNTIME unival-runtime)
+set(UNIVAL_TARGETS unival-targets)
 
 project(
   ${UNIVAL_PROJECT}
@@ -63,3 +66,35 @@ set_tests_properties(
   ${UNIVAL_UNITTESTS}
   PROPERTIES
   TIMEOUT "15")
+
+file(
+  GLOB_RECURSE headers_
+  RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/source/unival
+  ${CMAKE_CURRENT_SOURCE_DIR}/source/unival/*.h)
+
+foreach(path_ ${headers_})
+  get_filename_component(dir_ "${path_}" DIRECTORY)
+
+  install(
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/source/unival/${path_}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/unival/${dir_}
+    COMPONENT ${UNIVAL_COMPONENT_DEVELOPMENT})
+endforeach()
+
+unset(headers_)
+unset(path_)
+unset(dir_)
+
+install(
+  TARGETS ${UNIVAL_LIBRARY}
+  PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+  COMPONENT ${UNIVAL_COMPONENT_DEVELOPMENT})
+
+install(
+  TARGETS ${UNIVAL_LIB}
+  EXPORT ${UNIVAL_TARGETS}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  COMPONENT ${UNIVAL_COMPONENT_RUNTIME}
+  NAMELINK_COMPONENT ${UNIVAL_COMPONENT_DEVELOPMENT}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  COMPONENT ${UNIVAL_COMPONENT_DEVELOPMENT})
