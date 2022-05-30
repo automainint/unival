@@ -4,7 +4,8 @@
 #include "unival.h"
 
 namespace unival {
-  using std::optional, std::nullopt;
+  using std::optional, std::nullopt, std::string_view,
+      std::u8string_view;
 
   template <class... types_> struct overload : types_... {
     using types_::operator()...;
@@ -60,6 +61,22 @@ namespace unival {
     auto result = chain<type_> { std::move(*this) };
     result.m_cursor.emplace_back(type_ { key });
     return result;
+  }
+
+  template <typename type_>
+  auto chain<type_>::on(string_view key) noexcept -> chain<type_> {
+    return on(type_ { key });
+  }
+
+  template <typename type_>
+  auto chain<type_>::on(u8string_view key) noexcept -> chain<type_> {
+    return on(type_ { key });
+  }
+
+  template <typename type_>
+  auto chain<type_>::on_key(signed long long key) noexcept
+      -> chain<type_> {
+    return on(type_ { key });
   }
 
   template <typename type_>

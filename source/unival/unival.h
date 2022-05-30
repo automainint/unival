@@ -105,12 +105,17 @@ namespace unival {
     /*  Get vector element by index.
      */
     [[nodiscard]] auto get(signed long long index) const noexcept
-        -> unival;
+        -> unival const &;
 
     /*  Get composite element by key.
      */
     [[nodiscard]] auto get(unival const &key) const noexcept
-        -> unival;
+        -> unival const &;
+
+    /*  Get composite element by integer key.
+     */
+    [[nodiscard]] auto get_by_key(signed long long key) const noexcept
+        -> unival const &;
 
     /*  Set vector element by index.
      */
@@ -124,6 +129,12 @@ namespace unival {
                            unival const &value) const noexcept
         -> unival;
 
+    /*  Set composite element by integer key.
+     */
+    [[nodiscard]] auto set_by_key(signed long long key,
+                                  unival const &value) const noexcept
+        -> unival;
+
     /*  Remove vector element by index.
      */
     [[nodiscard]] auto remove(signed long long index) const noexcept
@@ -133,6 +144,11 @@ namespace unival {
      */
     [[nodiscard]] auto remove(unival const &key) const noexcept
         -> unival;
+
+    /*  Remove composite element by integer key.
+     */
+    [[nodiscard]] auto
+    remove_by_key(signed long long key) const noexcept -> unival;
 
     /*  Start edit chain.
      *
@@ -157,8 +173,24 @@ namespace unival {
     [[nodiscard]] auto begin() const noexcept -> iterator<unival>;
     [[nodiscard]] auto end() const noexcept -> iterator<unival>;
 
+    [[nodiscard]] auto
+    operator[](signed long long index) const noexcept
+        -> unival const &;
+
+    [[nodiscard]] auto operator[](unival const &key) const noexcept
+        -> unival const &;
+
+    [[nodiscard]] auto operator[](std::string_view key) const noexcept
+        -> unival const &;
+
+    [[nodiscard]] auto
+    operator[](std::u8string_view key) const noexcept
+        -> unival const &;
+
   private:
     [[nodiscard]] static auto _error() noexcept -> unival;
+
+    [[nodiscard]] static auto _error_ptr() noexcept -> unival const *;
 
     [[nodiscard]] auto _check(signed long long index) const noexcept
         -> bool;

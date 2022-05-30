@@ -195,26 +195,33 @@ namespace unival {
     return val;
   }
 
-  auto unival::get(signed long long index) const noexcept -> unival {
+  auto unival::get(signed long long index) const noexcept
+      -> unival const & {
     if (!is_vector())
-      return _error();
+      return *_error_ptr();
     auto const &v = std::get<n_vector>(m_value);
     if (index < 0 || index >= v.size())
-      return _error();
+      return *_error_ptr();
     return v[index];
   }
 
-  auto unival::get(unival const &key) const noexcept -> unival {
+  auto unival::get(unival const &key) const noexcept
+      -> unival const & {
     if (!is_composite())
-      return _error();
+      return *_error_ptr();
     auto const &comp = std::get<n_composite>(m_value);
     auto i = lower_bound(comp.begin(), comp.end(), key,
                          [](auto const &value, auto const &key) {
                            return value.first < key;
                          });
     if (i == comp.end() || i->first != key)
-      return _error();
+      return *_error_ptr();
     return i->second;
+  }
+
+  auto unival::get_by_key(signed long long key) const noexcept
+      -> unival const & {
+    return get(unival { key });
   }
 
   auto unival::set(signed long long index,
@@ -233,6 +240,12 @@ namespace unival {
     return val;
   }
 
+  auto unival::set_by_key(signed long long key,
+                          unival const &value) const noexcept
+      -> unival {
+    return set(unival { key }, value);
+  }
+
   auto unival::remove(signed long long index) const noexcept
       -> unival {
     auto val = unival { *this };
@@ -248,6 +261,11 @@ namespace unival {
     return val;
   }
 
+  auto unival::remove_by_key(signed long long key) const noexcept
+      -> unival {
+    return remove(unival { key });
+  }
+
   auto unival::edit() const noexcept -> chain<unival> {
     return chain<unival> { *this };
   }
@@ -260,10 +278,35 @@ namespace unival {
     return iterator<unival> { *this, get_size() };
   }
 
+  auto unival::operator[](signed long long index) const noexcept
+      -> unival const & {
+    return get(index);
+  }
+
+  auto unival::operator[](unival const &key) const noexcept
+      -> unival const & {
+    return get(key);
+  }
+
+  auto unival::operator[](string_view key) const noexcept
+      -> unival const & {
+    return get(unival { key });
+  }
+
+  auto unival::operator[](u8string_view key) const noexcept
+      -> unival const & {
+    return get(unival { key });
+  }
+
   auto unival::_error() noexcept -> unival {
     auto val = unival {};
     val.m_value = error_ {};
     return val;
+  }
+
+  auto unival::_error_ptr() noexcept -> unival const * {
+    static auto const val = _error();
+    return &val;
   }
 
   auto unival::_check(signed long long index) const noexcept -> bool {

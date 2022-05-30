@@ -471,4 +471,35 @@ namespace unival::test {
     REQUIRE(val.edit().on(1).on(-1).remove().commit().is_error());
     REQUIRE(val.edit().on(1).on(3).remove().commit().is_error());
   }
+
+  TEST_CASE("edit on integer key") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } } } };
+    val = val.edit().on_key(1).set(unival { 5 }).commit();
+    REQUIRE(val == unival { vector<pair<unival, unival>> {
+                       pair { unival { 1 }, unival { 5 } },
+                       pair { unival { 3 }, unival { 4 } } } });
+  }
+
+  TEST_CASE("edit on ASCII string key") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { "a" }, unival { "b" } },
+        pair { unival { "c" }, unival { "d" } } } };
+    val = val.edit().on("c").set(unival { "e" }).commit();
+    REQUIRE(val == unival { vector<pair<unival, unival>> {
+                       pair { unival { "a" }, unival { "b" } },
+                       pair { unival { "c" }, unival { "e" } } } });
+  }
+
+  TEST_CASE("edit on UTF-8 string key") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { u8"a" }, unival { u8"b" } },
+        pair { unival { u8"c" }, unival { u8"d" } } } };
+    val = val.edit().on(u8"c").set(unival { u8"e" }).commit();
+    REQUIRE(val ==
+            unival { vector<pair<unival, unival>> {
+                pair { unival { u8"a" }, unival { u8"b" } },
+                pair { unival { u8"c" }, unival { u8"e" } } } });
+  }
 }

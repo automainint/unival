@@ -388,6 +388,15 @@ namespace unival::test {
     REQUIRE(bar > baz);
   }
 
+  TEST_CASE("compare error univals") {
+    auto foo = unival { 1 }.get(0);
+    auto bar = unival { 2 }.get(0);
+    auto baz = unival { 42 };
+
+    REQUIRE(foo == bar);
+    REQUIRE(foo != baz);
+  }
+
   TEST_CASE("is composite when created from composite") {
     auto val = unival { vector<pair<unival, unival>> {
         pair { unival { 1 }, unival { 2 } } } };
@@ -575,5 +584,61 @@ namespace unival::test {
     val = val.set(unival { 0 }, unival { 1 });
     REQUIRE(val == unival { vector<pair<unival, unival>> {
                        pair { unival { 0 }, unival { 1 } } } });
+  }
+
+  TEST_CASE("access operator by index") {
+    auto val =
+        unival { vector<unival> { unival { 1 }, unival { 2 } } };
+    REQUIRE(val[0] == unival { 1 });
+    REQUIRE(val[1] == unival { 2 });
+  }
+
+  TEST_CASE("access operator by key") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } } } };
+    REQUIRE(val[unival { 1 }] == unival { 2 });
+    REQUIRE(val[unival { 3 }] == unival { 4 });
+  }
+
+  TEST_CASE("access operator by ASCII string key") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { "foo" }, unival { 2 } },
+        pair { unival { "bar" }, unival { 4 } } } };
+    REQUIRE(val["foo"] == unival { 2 });
+    REQUIRE(val["bar"] == unival { 4 });
+  }
+
+  TEST_CASE("access operator by UTF-8 string key") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { u8"foo" }, unival { 2 } },
+        pair { unival { u8"bar" }, unival { 4 } } } };
+    REQUIRE(val[u8"foo"] == unival { 2 });
+    REQUIRE(val[u8"bar"] == unival { 4 });
+  }
+
+  TEST_CASE("get by int key") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } } } };
+    REQUIRE(val.get_by_key(1) == unival { 2 });
+    REQUIRE(val.get_by_key(3) == unival { 4 });
+  }
+
+  TEST_CASE("set by int key") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } } } };
+    val = val.set_by_key(1, unival { 5 });
+    REQUIRE(val.get_by_key(1) == unival { 5 });
+  }
+
+  TEST_CASE("remove by int key") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } },
+        pair { unival { 3 }, unival { 4 } } } };
+    val = val.remove_by_key(1);
+    REQUIRE(val.get_size() == 1);
+    REQUIRE(val.get_by_key(3) == unival { 4 });
   }
 }

@@ -63,4 +63,18 @@ namespace unival::test {
     auto val = unival { vector<unival> { unival { 1 } } };
     REQUIRE(val.begin()->get_integer() == 1);
   }
+
+  TEST_CASE("use arrow with iterator of composite unival") {
+    auto val = unival { vector<pair<unival, unival>> {
+        pair { unival { 1 }, unival { 2 } } } };
+    REQUIRE(val.begin()->get_integer() == 1);
+  }
+
+  TEST_CASE("can not use arrow with out of bounds iterator") {
+    auto val = unival { vector<unival> { unival { 1 } } };
+    auto i = iterator<unival> { val, -1 };
+    auto j = iterator<unival> { val, 2 };
+    REQUIRE(i->is_error());
+    REQUIRE(j->is_error());
+  }
 }

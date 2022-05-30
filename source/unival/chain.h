@@ -6,6 +6,7 @@
 
 #include <optional>
 #include <span>
+#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -31,6 +32,21 @@ namespace unival {
      *  current cursor position.
      */
     auto on(type_ const &key) noexcept -> chain<type_>;
+
+    /*  Move cursor to composite element by ASCII string key relative
+     *  to the current cursor position.
+     */
+    auto on(std::string_view key) noexcept -> chain<type_>;
+
+    /*  Move cursor to composite element by UTF-8 string key relative
+     *  to the current cursor position.
+     */
+    auto on(std::u8string_view key) noexcept -> chain<type_>;
+
+    /*  Move cursor to composite element by integer key relative to
+     *  the current cursor position.
+     */
+    auto on_key(signed long long key) noexcept -> chain<type_>;
 
     /*  Resize vector on the current cursor position and reset the
      *  cursor.
