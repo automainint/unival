@@ -46,7 +46,9 @@ def print_sources(folder: str, target_name: str):
     if len(srcs) > 0:
       buf += '\n    PRIVATE\n' + print_list(srcs, 6)
     if len(hdrs) > 0:
-      buf += '\n    PUBLIC\n' + print_list(hdrs, 6)
+      buf += '\n    PUBLIC'
+    for f in hdrs:
+      buf += '\n      $<BUILD_INTERFACE:' + f + '>'
     buf += ')\n'
   return buf
 

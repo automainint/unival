@@ -20,7 +20,10 @@ project(
 
 add_library(${UNIVAL_LIBRARY} STATIC)
 add_library(${UNIVAL_PROJECT}::${UNIVAL_LIBRARY} ALIAS ${UNIVAL_LIBRARY})
-target_include_directories(${UNIVAL_LIBRARY} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/source)
+target_include_directories(
+  ${UNIVAL_LIBRARY} INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/source>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_compile_features(${UNIVAL_LIBRARY} PUBLIC cxx_std_20)
 
 include(FetchContent)
@@ -67,6 +70,8 @@ set_tests_properties(
   PROPERTIES
   TIMEOUT "15")
 
+include(GNUInstallDirs)
+
 file(
   GLOB_RECURSE headers_
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/source/unival
@@ -87,14 +92,41 @@ unset(dir_)
 
 install(
   TARGETS ${UNIVAL_LIBRARY}
-  PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-  COMPONENT ${UNIVAL_COMPONENT_DEVELOPMENT})
-
-install(
-  TARGETS ${UNIVAL_LIB}
   EXPORT ${UNIVAL_TARGETS}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   COMPONENT ${UNIVAL_COMPONENT_RUNTIME}
   NAMELINK_COMPONENT ${UNIVAL_COMPONENT_DEVELOPMENT}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   COMPONENT ${UNIVAL_COMPONENT_DEVELOPMENT})
+
+install(
+  EXPORT ${UNIVAL_TARGETS}
+  FILE ${UNIVAL_TARGETS}.cmake
+  NAMESPACE ${PROJECT_NAME}::
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
+
+export(EXPORT ${UNIVAL_TARGETS}
+        FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/${UNIVAL_TARGETS}.cmake"
+        NAMESPACE ${PROJECT_NAME}::)
+
+include(CMakePackageConfigHelpers)
+
+string(TOLOWER ${PROJECT_NAME} project_lower_)
+
+configure_package_config_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/${project_lower_}-config.cmake"
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
+
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/${project_lower_}-config-version.cmake"
+  VERSION "${PROJECT_VERSION}"
+  COMPATIBILITY AnyNewerVersion)
+
+install(
+  FILES
+  "${CMAKE_CURRENT_BINARY_DIR}/${project_lower_}-config.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/${project_lower_}-config-version.cmake"
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
+
+unset(project_lower_)
