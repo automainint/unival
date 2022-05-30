@@ -5,5 +5,6 @@ project(${NAME})
 find_package(unival)
 
 add_executable(${NAME})
-target_sources(${NAME} main.cpp)
+target_sources(${NAME} PRIVATE main.cpp)
 target_link_libraries(${NAME} PRIVATE unival::unival)
+install(TARGETS ${NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
