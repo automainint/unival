@@ -15,6 +15,6 @@ ExternalProject_Add(
   ${NAME}
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source
   CMAKE_ARGS
-  -D CMAKE_MODULE_PATH=${CMAKE_CURRENT_SOURCE_DIR}/install)
+  -D CMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/install)
 
 ExternalProject_Add_StepDependencies(${NAME} build unival)
