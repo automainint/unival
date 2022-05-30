@@ -94,7 +94,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest, macos-latest, windows-2019 ]
-        name: [ fetch_content, integration ]
+        name: [ fetch_content, find_package ]
 
     runs-on: ${{ matrix.os }}
 
