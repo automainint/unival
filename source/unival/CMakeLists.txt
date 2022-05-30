@@ -1,5 +1,5 @@
 target_sources(
-  ${UNIVAL_TEST}
+  ${UNIVAL_LIBRARY}
     PRIVATE
       chain.cpp unival.cpp iterator.cpp
     PUBLIC

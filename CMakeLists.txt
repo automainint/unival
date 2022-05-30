@@ -4,9 +4,8 @@ if(NOT DEFINED CMAKE_BUILD_PARALLEL_LEVEL)
   set(CMAKE_BUILD_PARALLEL_LEVEL 3)
 endif()
 
-set(CMAKE_CXX_STANDARD 20)
-
 set(UNIVAL_PROJECT unival)
+set(UNIVAL_LIBRARY unival)
 set(UNIVAL_TEST unival-test)
 set(UNIVAL_UNITTESTS unival-unittests)
 
@@ -15,6 +14,9 @@ project(
   VERSION 0.1.1
   DESCRIPTION "Universal data container"
   LANGUAGES CXX)
+
+add_library(${UNIVAL_LIBRARY} STATIC)
+target_compile_features(${UNIVAL_LIBRARY} PUBLIC cxx_std_20)
 
 include(FetchContent)
 
@@ -26,7 +28,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2)
 
 add_executable(${UNIVAL_TEST})
-target_link_libraries(${UNIVAL_TEST} PRIVATE Catch2::Catch2)
+
+target_link_libraries(
+  ${UNIVAL_TEST}
+  PRIVATE
+  ${UNIVAL_LIBRARY} Catch2::Catch2)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   target_compile_options(
@@ -40,7 +46,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 endif()
 
 if(MSVC)
-  target_compile_options(${UNIVAL_TEST} INTERFACE /Od)
+  target_compile_options(${UNIVAL_TEST} PRIVATE /Od)
 endif()
 
 add_subdirectory(source)

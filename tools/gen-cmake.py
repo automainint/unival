@@ -79,7 +79,8 @@ def gen_cmake(folder: str, target_name: str):
   write_subdirs(folder, target_name)
 
 def main():
-  gen_cmake(os.path.join('..', 'source'), '${UNIVAL_TEST}')
+  gen_cmake(os.path.join('..', 'source', 'unival'), '${UNIVAL_LIBRARY}')
+  gen_cmake(os.path.join('..', 'source', 'test', 'unittests'), '${UNIVAL_TEST}')
 
 if __name__ == '__main__':
   main()
