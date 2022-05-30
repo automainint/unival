@@ -1,15 +1,16 @@
 cmake_minimum_required(VERSION 3.16)
 
-if(NOT DEFINED CMAKE_BUILD_PARALLEL_LEVEL)
-  set(CMAKE_BUILD_PARALLEL_LEVEL 3)
-endif()
+option(UNIVAL_ENABLE_TESTS "Enable tests" ON)
 
 set(UNIVAL_PROJECT unival)
 set(UNIVAL_LIBRARY unival)
 set(UNIVAL_TEST unival-test)
 set(UNIVAL_UNITTESTS unival-unittests)
-set(UNIVAL_COMPONENT_DEVELOPMENT unival-development)
 set(UNIVAL_TARGETS unival-targets)
+
+if(NOT DEFINED CMAKE_BUILD_PARALLEL_LEVEL)
+  set(CMAKE_BUILD_PARALLEL_LEVEL 3)
+endif()
 
 project(
   ${UNIVAL_PROJECT}
@@ -24,49 +25,51 @@ target_include_directories(
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/source>)
 target_compile_features(${UNIVAL_LIBRARY} PUBLIC cxx_std_20)
 
-include(FetchContent)
+enable_testing()
 
-FetchContent_Declare(
-  Catch2
-  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG v2.13.9)
+if(UNIVAL_ENABLE_TESTS)
+  include(FetchContent)
 
-FetchContent_MakeAvailable(Catch2)
+  FetchContent_Declare(
+    Catch2
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG v2.13.9)
 
-add_executable(${UNIVAL_TEST})
+  FetchContent_MakeAvailable(Catch2)
 
-target_link_libraries(
-  ${UNIVAL_TEST}
-  PRIVATE
-  ${UNIVAL_LIBRARY} Catch2::Catch2)
+  add_executable(${UNIVAL_TEST})
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-  target_compile_options(
-    ${UNIVAL_TEST} PRIVATE
-    #-fsanitize=undefined,address
-    --coverage -O0 -g)
-  target_link_options(
-    ${UNIVAL_TEST} PRIVATE
-    #-fsanitize=undefined,address
-    --coverage)
-endif()
+  target_link_libraries(
+    ${UNIVAL_TEST}
+    PRIVATE
+    ${UNIVAL_LIBRARY} Catch2::Catch2)
 
-if(MSVC)
-  target_compile_options(${UNIVAL_TEST} PRIVATE /Od)
+  if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(
+      ${UNIVAL_TEST} PRIVATE
+      #-fsanitize=undefined,address
+      --coverage -O0 -g)
+    target_link_options(
+      ${UNIVAL_TEST} PRIVATE
+      #-fsanitize=undefined,address
+      --coverage)
+  endif()
+
+  if(MSVC)
+    target_compile_options(${UNIVAL_TEST} PRIVATE /Od)
+  endif()
+
+  add_test(
+    NAME ${UNIVAL_UNITTESTS}
+    COMMAND ${UNIVAL_TEST})
+
+  set_tests_properties(
+    ${UNIVAL_UNITTESTS}
+    PROPERTIES
+    TIMEOUT "15")
 endif()
 
 add_subdirectory(source)
-
-enable_testing()
-
-add_test(
-  NAME ${UNIVAL_UNITTESTS}
-  COMMAND ${UNIVAL_TEST})
-
-set_tests_properties(
-  ${UNIVAL_UNITTESTS}
-  PROPERTIES
-  TIMEOUT "15")
 
 include(GNUInstallDirs)
 
@@ -80,8 +83,7 @@ foreach(path_ ${headers_})
 
   install(
     FILES ${CMAKE_CURRENT_SOURCE_DIR}/source/unival/${path_}
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/unival/${dir_}
-    COMPONENT ${UNIVAL_COMPONENT_DEVELOPMENT})
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/unival/${dir_})
 endforeach()
 
 unset(headers_)
@@ -92,11 +94,8 @@ install(
   TARGETS ${UNIVAL_LIBRARY}
   EXPORT ${UNIVAL_TARGETS}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  COMPONENT ${UNIVAL_COMPONENT_DEVELOPMENT}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  COMPONENT ${UNIVAL_COMPONENT_DEVELOPMENT}
-  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-  COMPONENT ${UNIVAL_COMPONENT_DEVELOPMENT})
+  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 install(
   EXPORT ${UNIVAL_TARGETS}

@@ -1,2 +1,5 @@
 add_subdirectory(unival)
-add_subdirectory(test)
+
+if(UNIVAL_ENABLE_TESTS)
+  add_subdirectory(test)
+endif()
