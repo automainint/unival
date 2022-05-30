@@ -16,6 +16,8 @@ project(
   LANGUAGES CXX)
 
 add_library(${UNIVAL_LIBRARY} STATIC)
+add_library(${UNIVAL_PROJECT}::${UNIVAL_LIBRARY} ALIAS ${UNIVAL_LIBRARY})
+target_include_directories(${UNIVAL_LIBRARY} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/source)
 target_compile_features(${UNIVAL_LIBRARY} PUBLIC cxx_std_20)
 
 include(FetchContent)
