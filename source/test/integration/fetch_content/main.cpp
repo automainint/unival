@@ -2,6 +2,7 @@
  */
 
 #include <unival/unival.h>
+#include <unival/print.h>
 
 auto main() -> int {
   auto val = unival::unival { "foo" };

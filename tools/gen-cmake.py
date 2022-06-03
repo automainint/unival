@@ -48,7 +48,7 @@ def print_sources(folder: str, target_name: str):
     if len(hdrs) > 0:
       buf += '\n    PUBLIC'
     for f in hdrs:
-      buf += '\n      $<BUILD_INTERFACE:' + f + '>'
+      buf += '\n      $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/' + f + '>'
     buf += ')\n'
   return buf
 
