@@ -13,9 +13,9 @@ namespace unival::test {
   TEST_CASE("Print int unival") {
     auto val = unival { 42 };
     auto str = u8string {};
-    auto put = [&](u8string_view s) -> signed long long {
+    auto put = [&](u8string_view s) -> ptrdiff_t {
       str.append(s.begin(), s.end());
-      return static_cast<signed long long>(s.size());
+      return static_cast<ptrdiff_t>(s.size());
     };
 
     REQUIRE(print(val, put));
@@ -23,15 +23,13 @@ namespace unival::test {
   }
 
   TEST_CASE("Print can fail if callback fails") {
-    REQUIRE(
-        !print(unival { 42 }, [&](u8string_view) -> signed long long {
-          return -1;
-        }));
+    REQUIRE(!print(unival { 42 },
+                   [&](u8string_view) -> ptrdiff_t { return -1; }));
   }
 
   TEST_CASE("Print can fail if value is invalid") {
-    auto put = [&](u8string_view s) -> signed long long {
-      return static_cast<signed long long>(s.size());
+    auto put = [&](u8string_view s) -> ptrdiff_t {
+      return static_cast<ptrdiff_t>(s.size());
     };
 
     REQUIRE(!print(unival { 42 }.set(0, unival { 0 }), put));
@@ -51,9 +49,8 @@ namespace unival::test {
   }
 
   TEST_CASE("Print empty can fail") {
-    REQUIRE(!print(unival {}, [&](u8string_view) -> signed long long {
-      return -1;
-    }));
+    REQUIRE(!print(unival {},
+                   [&](u8string_view) -> ptrdiff_t { return -1; }));
   }
 
   TEST_CASE("Print boolean unival") {
@@ -62,9 +59,8 @@ namespace unival::test {
   }
 
   TEST_CASE("Print boolean can fail") {
-    REQUIRE(!print(
-        unival { true },
-        [&](u8string_view) -> signed long long { return -1; }));
+    REQUIRE(!print(unival { true },
+                   [&](u8string_view) -> ptrdiff_t { return -1; }));
   }
 
   TEST_CASE("Print float unival") {
@@ -84,9 +80,8 @@ namespace unival::test {
   }
 
   TEST_CASE("Print float can fail") {
-    REQUIRE(!print(
-        unival { 4.2 },
-        [&](u8string_view) -> signed long long { return -1; }));
+    REQUIRE(!print(unival { 4.2 },
+                   [&](u8string_view) -> ptrdiff_t { return -1; }));
   }
 
   TEST_CASE("Print string unival") {
@@ -98,28 +93,25 @@ namespace unival::test {
   }
 
   TEST_CASE("Print string can fail 1") {
-    REQUIRE(!print(
-        unival { u8"42" },
-        [&](u8string_view) -> signed long long { return -1; }));
+    REQUIRE(!print(unival { u8"42" },
+                   [&](u8string_view) -> ptrdiff_t { return -1; }));
   }
 
   TEST_CASE("Print string can fail 2") {
-    REQUIRE(!print(
-        unival { u8"42" },
-        [&, n = 0](u8string_view s) mutable -> signed long long {
-          if (n++ == 1)
-            return -1;
-          return static_cast<signed long long>(s.size());
-        }));
+    REQUIRE(!print(unival { u8"42" },
+                   [&, n = 0](u8string_view s) mutable -> ptrdiff_t {
+                     if (n++ == 1)
+                       return -1;
+                     return static_cast<ptrdiff_t>(s.size());
+                   }));
   }
 
   TEST_CASE("Print string can fail 3") {
-    REQUIRE(!print(
-        unival { u8"42" },
-        [&, n = 0](u8string_view s) mutable -> signed long long {
-          if (n++ == 2)
-            return -1;
-          return static_cast<signed long long>(s.size());
-        }));
+    REQUIRE(!print(unival { u8"42" },
+                   [&, n = 0](u8string_view s) mutable -> ptrdiff_t {
+                     if (n++ == 2)
+                       return -1;
+                     return static_cast<ptrdiff_t>(s.size());
+                   }));
   }
 }
