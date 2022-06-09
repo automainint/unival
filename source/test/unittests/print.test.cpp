@@ -7,7 +7,7 @@
 #include <iostream>
 
 namespace unival::test {
-  using std::u8string, std::u8string_view, std::vector, std::pair;
+  using std::u8string, std::u8string_view;
 
   TEST_CASE("Print int unival") {
     auto val = unival { 42 };
@@ -115,40 +115,39 @@ namespace unival::test {
   }
 
   TEST_CASE("Print empty byte array") {
-    REQUIRE(to_string(unival { vector<int8_t> {} }) == u8"::{}");
+    REQUIRE(to_string(unival { bytes {} }) == u8"::{}");
   }
 
   TEST_CASE("Print byte array") {
-    REQUIRE(to_string(
-                unival { vector<int8_t> { 1, 2, 3, 4, 0x1f, -8 } }) ==
+    REQUIRE(to_string(unival { bytes { 1, 2, 3, 4, 0x1f, -8 } }) ==
             u8"::{01 02 03 04 1f f8}");
   }
 
   TEST_CASE("Print byte may fail") {
-    REQUIRE(!print(unival { vector<int8_t> { 1, 2, 3, 4, 0x1f, -8 } },
+    REQUIRE(!print(unival { bytes { 1, 2, 3, 4, 0x1f, -8 } },
                    [](u8string_view) -> bool { return false; }));
     REQUIRE(!print(
-        unival { vector<int8_t> { 1, 2, 3, 4, 0x1f, -8 } },
+        unival { bytes { 1, 2, 3, 4, 0x1f, -8 } },
         [i = 0](u8string_view) mutable -> bool { return i++ != 1; }));
     REQUIRE(!print(
-        unival { vector<int8_t> { 1, 2, 3, 4, 0x1f, -8 } },
+        unival { bytes { 1, 2, 3, 4, 0x1f, -8 } },
         [i = 0](u8string_view) mutable -> bool { return i++ != 2; }));
     REQUIRE(!print(
-        unival { vector<int8_t> { 1, 2, 3, 4, 0x1f, -8 } },
+        unival { bytes { 1, 2, 3, 4, 0x1f, -8 } },
         [i = 0](u8string_view) mutable -> bool { return i++ != 3; }));
   }
 
   TEST_CASE("Print empty vector") {
-    REQUIRE(to_string(unival { vector<unival> {} }) == u8"[]");
+    REQUIRE(to_string(unival { vector {} }) == u8"[]");
   }
 
   TEST_CASE("Print 1-vector") {
-    REQUIRE(to_string(unival { vector<unival> { unival { 42 } } }) ==
+    REQUIRE(to_string(unival { vector { unival { 42 } } }) ==
             u8"[42]");
   }
 
   TEST_CASE("Print 3-vector") {
-    REQUIRE(to_string(unival { vector<unival> {
+    REQUIRE(to_string(unival { vector {
                 unival { 42 },
                 unival { 43 },
                 unival { 44 },
@@ -156,77 +155,71 @@ namespace unival::test {
   }
 
   TEST_CASE("Print nested vector") {
-    REQUIRE(to_string(unival { vector<unival> {
+    REQUIRE(to_string(unival { vector {
                 unival { 42 },
-                unival {
-                    vector<unival> { unival { 43 }, unival { 44 } } },
+                unival { vector { unival { 43 }, unival { 44 } } },
                 unival { 45 } } }) == u8"42,[43,44],45");
   }
 
   TEST_CASE("Print vector may fail") {
-    REQUIRE(!print(unival { vector<unival> { unival { 42 } } },
+    REQUIRE(!print(unival { vector { unival { 42 } } },
                    [](u8string_view) -> bool { return false; }));
     REQUIRE(!print(
-        unival { vector<unival> { unival { 42 } } },
+        unival { vector { unival { 42 } } },
         [i = 0](u8string_view) mutable -> bool { return i++ != 1; }));
     REQUIRE(!print(
-        unival { vector<unival> { unival { 42 } } },
+        unival { vector { unival { 42 } } },
         [i = 0](u8string_view) mutable -> bool { return i++ != 2; }));
     REQUIRE(!print(
-        unival { vector<unival> { unival { 42 }, unival { 43 },
-                                  unival { 44 } } },
+        unival {
+            vector { unival { 42 }, unival { 43 }, unival { 44 } } },
         [i = 0](u8string_view) mutable -> bool { return i++ != 3; }));
   }
 
   TEST_CASE("Print empty composite") {
-    REQUIRE(to_string(unival { vector<pair<unival, unival>> {
+    REQUIRE(to_string(unival { composite {
 
             } }) == u8"{}");
   }
 
   TEST_CASE("Print 1-composite") {
-    REQUIRE(to_string(unival { vector<pair<unival, unival>> {
+    REQUIRE(to_string(unival { composite {
                 { unival { 42 }, unival { 43 } },
             } }) == u8"{42:43}");
   }
 
   TEST_CASE("Print 3-composite") {
-    REQUIRE(to_string(unival { vector<pair<unival, unival>> {
-                { unival { 42 }, unival { 43 } },
-                { unival { 44 }, unival { 45 } },
-                { unival { 46 }, unival { 47 } } } }) ==
+    REQUIRE(to_string(unival {
+                composite { { unival { 42 }, unival { 43 } },
+                            { unival { 44 }, unival { 45 } },
+                            { unival { 46 }, unival { 47 } } } }) ==
             u8"{42:43 44:45 46:47}");
   }
 
   TEST_CASE("Print composite may fail") {
-    REQUIRE(!print(unival { vector<pair<unival, unival>> {
-                       { unival { 42 }, unival { 43 } } } },
-                   [](u8string_view) -> bool { return false; }));
     REQUIRE(!print(
-        unival { vector<pair<unival, unival>> {
-            { unival { 42 }, unival { 43 } } } },
+        unival { composite { { unival { 42 }, unival { 43 } } } },
+        [](u8string_view) -> bool { return false; }));
+    REQUIRE(!print(
+        unival { composite { { unival { 42 }, unival { 43 } } } },
         [i = 0](u8string_view) mutable -> bool { return i++ != 1; }));
     REQUIRE(!print(
-        unival { vector<pair<unival, unival>> {
-            { unival { 42 }, unival { 43 } } } },
+        unival { composite { { unival { 42 }, unival { 43 } } } },
         [i = 0](u8string_view) mutable -> bool { return i++ != 2; }));
     REQUIRE(!print(
-        unival { vector<pair<unival, unival>> {
-            { unival { 42 }, unival { 43 } },
-            { unival { 44 }, unival { 45 } },
-            { unival { 46 }, unival { 47 } } } },
+        unival { composite { { unival { 42 }, unival { 43 } },
+                             { unival { 44 }, unival { 45 } },
+                             { unival { 46 }, unival { 47 } } } },
         [i = 0](u8string_view) mutable -> bool { return i++ != 3; }));
     REQUIRE(!print(
-        unival { vector<pair<unival, unival>> {
-            { unival { 42 }, unival { 43 } },
-            { unival { 44 }, unival { 45 } },
-            { unival { 46 }, unival { 47 } } } },
+        unival { composite { { unival { 42 }, unival { 43 } },
+                             { unival { 44 }, unival { 45 } },
+                             { unival { 46 }, unival { 47 } } } },
         [i = 0](u8string_view) mutable -> bool { return i++ != 4; }));
     REQUIRE(!print(
-        unival { vector<pair<unival, unival>> {
-            { unival { 42 }, unival { 43 } },
-            { unival { 44 }, unival { 45 } },
-            { unival { 46 }, unival { 47 } } } },
+        unival { composite { { unival { 42 }, unival { 43 } },
+                             { unival { 44 }, unival { 45 } },
+                             { unival { 46 }, unival { 47 } } } },
         [i = 0](u8string_view) mutable -> bool { return i++ != 5; }));
   }
 }

@@ -240,6 +240,10 @@ namespace unival {
 
     value_type_ m_value;
   };
+
+  using bytes = std::vector<int8_t>;
+  using vector = std::vector<unival>;
+  using composite = std::vector<std::pair<unival, unival>>;
 }
 
 #endif

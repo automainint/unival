@@ -7,8 +7,8 @@
 
 namespace unival {
   using std::optional, std::nullopt, std::u8string, std::string_view,
-      std::u8string_view, std::vector, std::span, std::pair,
-      std::lower_bound, std::sort;
+      std::u8string_view, std::span, std::pair, std::lower_bound,
+      std::sort;
 
   unival::unival(bool value) noexcept : m_value(value) { }
 
@@ -53,10 +53,10 @@ namespace unival {
       : m_value(u8string { value }) { }
 
   unival::unival(span<int8_t const> value) noexcept
-      : m_value(vector<int8_t> { value.begin(), value.end() }) { }
+      : m_value(bytes { value.begin(), value.end() }) { }
 
   unival::unival(span<unival const> value) noexcept
-      : m_value(vector<unival> { value.begin(), value.end() }) { }
+      : m_value(vector { value.begin(), value.end() }) { }
 
   unival::unival(span<pair<unival, unival> const> value) noexcept
       : m_value(composite_ { value.begin(), value.end() }) {
@@ -355,7 +355,7 @@ namespace unival {
     if (!is_composite() && !is_empty())
       return false;
     if (!is_composite())
-      m_value = vector<pair<unival, unival>> {};
+      m_value = composite {};
     auto &comp = std::get<n_composite>(m_value);
     auto i = lower_bound(comp.begin(), comp.end(), key,
                          [](auto const &value, auto const &key) {
@@ -375,7 +375,7 @@ namespace unival {
     if (!is_vector() && !is_empty())
       return false;
     if (!is_vector())
-      m_value = vector<unival> { static_cast<size_t>(size), def };
+      m_value = vector { static_cast<size_t>(size), def };
     else {
       auto &v = std::get<n_vector>(m_value);
       v.resize(size, def);
