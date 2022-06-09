@@ -4,6 +4,7 @@
 #ifndef UNIVAL_CHAIN_H
 #define UNIVAL_CHAIN_H
 
+#include <cstddef>
 #include <optional>
 #include <span>
 #include <string_view>
@@ -26,7 +27,7 @@ namespace unival {
     /*  Move cursor to vector element by index relative to the current
      *  cursor position.
      */
-    auto on(signed long long index) noexcept -> chain<type_>;
+    auto on(ptrdiff_t index) noexcept -> chain<type_>;
 
     /*  Move cursor to composite element by key relative to the
      *  current cursor position.
@@ -46,13 +47,13 @@ namespace unival {
     /*  Move cursor to composite element by integer key relative to
      *  the current cursor position.
      */
-    auto on_key(signed long long key) noexcept -> chain<type_>;
+    auto on_key(ptrdiff_t key) noexcept -> chain<type_>;
 
     /*  Resize vector on the current cursor position and reset the
      *  cursor.
      */
-    auto resize(signed long long size,
-                type_ const &def = type_ {}) noexcept -> chain<type_>;
+    auto resize(ptrdiff_t size, type_ const &def = type_ {}) noexcept
+        -> chain<type_>;
 
     /*  Remove element on the current cursor position and reset the
      *  cursor.
@@ -60,17 +61,17 @@ namespace unival {
     auto remove() noexcept -> chain<type_>;
 
   private:
-    using path_ = std::vector<std::variant<signed long long, type_>>;
+    using path_ = std::vector<std::variant<ptrdiff_t, type_>>;
 
     using path_span_ =
-        std::span<std::variant<signed long long, type_> const>;
+        std::span<std::variant<ptrdiff_t, type_> const>;
 
     static auto _set(type_ &origin, path_span_ path,
                      type_ const &value) noexcept -> bool;
 
     static auto _resize(type_ &origin, path_span_ path,
-                        signed long long size,
-                        type_ const &def) noexcept -> bool;
+                        ptrdiff_t size, type_ const &def) noexcept
+        -> bool;
 
     static auto _remove(type_ &origin, path_span_ path) noexcept
         -> bool;
@@ -80,7 +81,7 @@ namespace unival {
     };
 
     struct resize_ {
-      signed long long size = 0;
+      ptrdiff_t size = 0;
       type_ def;
     };
 

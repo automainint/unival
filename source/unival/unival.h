@@ -89,22 +89,22 @@ namespace unival {
 
     /*  Get vector or composite element count.
      */
-    [[nodiscard]] auto get_size() const noexcept -> signed long long;
+    [[nodiscard]] auto get_size() const noexcept -> ptrdiff_t;
 
     /*  Resize vector.
      */
-    [[nodiscard]] auto resize(signed long long size) const noexcept
+    [[nodiscard]] auto resize(ptrdiff_t size) const noexcept
         -> unival;
 
     /*  Resize vector with default element value.
      */
-    [[nodiscard]] auto resize(signed long long size,
+    [[nodiscard]] auto resize(ptrdiff_t size,
                               unival const &def) const noexcept
         -> unival;
 
     /*  Get vector element by index.
      */
-    [[nodiscard]] auto get(signed long long index) const noexcept
+    [[nodiscard]] auto get(ptrdiff_t index) const noexcept
         -> unival const &;
 
     /*  Get composite element by key.
@@ -114,12 +114,12 @@ namespace unival {
 
     /*  Get composite element by integer key.
      */
-    [[nodiscard]] auto get_by_key(signed long long key) const noexcept
+    [[nodiscard]] auto get_by_key(ptrdiff_t key) const noexcept
         -> unival const &;
 
     /*  Set vector element by index.
      */
-    [[nodiscard]] auto set(signed long long index,
+    [[nodiscard]] auto set(ptrdiff_t index,
                            unival const &value) const noexcept
         -> unival;
 
@@ -131,13 +131,13 @@ namespace unival {
 
     /*  Set composite element by integer key.
      */
-    [[nodiscard]] auto set_by_key(signed long long key,
+    [[nodiscard]] auto set_by_key(ptrdiff_t key,
                                   unival const &value) const noexcept
         -> unival;
 
     /*  Remove vector element by index.
      */
-    [[nodiscard]] auto remove(signed long long index) const noexcept
+    [[nodiscard]] auto remove(ptrdiff_t index) const noexcept
         -> unival;
 
     /*  Remove composite element by key.
@@ -147,8 +147,8 @@ namespace unival {
 
     /*  Remove composite element by integer key.
      */
-    [[nodiscard]] auto
-    remove_by_key(signed long long key) const noexcept -> unival;
+    [[nodiscard]] auto remove_by_key(ptrdiff_t key) const noexcept
+        -> unival;
 
     /*  Start edit chain.
      *
@@ -173,8 +173,7 @@ namespace unival {
     [[nodiscard]] auto begin() const noexcept -> iterator<unival>;
     [[nodiscard]] auto end() const noexcept -> iterator<unival>;
 
-    [[nodiscard]] auto
-    operator[](signed long long index) const noexcept
+    [[nodiscard]] auto operator[](ptrdiff_t index) const noexcept
         -> unival const &;
 
     [[nodiscard]] auto operator[](unival const &key) const noexcept
@@ -192,28 +191,25 @@ namespace unival {
 
     [[nodiscard]] static auto _error_ptr() noexcept -> unival const *;
 
-    [[nodiscard]] auto _check(signed long long index) const noexcept
-        -> bool;
+    [[nodiscard]] auto _check(ptrdiff_t index) const noexcept -> bool;
 
     [[nodiscard]] auto _check(unival const &key) const noexcept
         -> bool;
 
-    [[nodiscard]] auto _get(signed long long index) noexcept
-        -> unival &;
+    [[nodiscard]] auto _get(ptrdiff_t index) noexcept -> unival &;
 
     [[nodiscard]] auto _get(unival const &key) noexcept -> unival &;
 
-    [[nodiscard]] auto _set(signed long long index,
+    [[nodiscard]] auto _set(ptrdiff_t index,
                             unival const &value) noexcept -> bool;
 
     [[nodiscard]] auto _set(unival const &key,
                             unival const &value) noexcept -> bool;
 
-    [[nodiscard]] auto _resize(signed long long size,
+    [[nodiscard]] auto _resize(ptrdiff_t size,
                                unival const &def) noexcept -> bool;
 
-    [[nodiscard]] auto _remove(signed long long index) noexcept
-        -> bool;
+    [[nodiscard]] auto _remove(ptrdiff_t index) noexcept -> bool;
 
     [[nodiscard]] auto _remove(unival const &key) noexcept -> bool;
 

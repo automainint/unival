@@ -49,8 +49,7 @@ namespace unival {
   }
 
   template <typename type_>
-  auto chain<type_>::on(signed long long index) noexcept
-      -> chain<type_> {
+  auto chain<type_>::on(ptrdiff_t index) noexcept -> chain<type_> {
     auto result = chain<type_> { std::move(*this) };
     result.m_cursor.emplace_back(index);
     return result;
@@ -74,14 +73,12 @@ namespace unival {
   }
 
   template <typename type_>
-  auto chain<type_>::on_key(signed long long key) noexcept
-      -> chain<type_> {
+  auto chain<type_>::on_key(ptrdiff_t key) noexcept -> chain<type_> {
     return on(type_ { key });
   }
 
   template <typename type_>
-  auto chain<type_>::resize(signed long long size,
-                            type_ const &def) noexcept
+  auto chain<type_>::resize(ptrdiff_t size, type_ const &def) noexcept
       -> chain<type_> {
     auto result = chain<type_> { std::move(*this) };
     auto path = result.m_cursor;
@@ -137,7 +134,7 @@ namespace unival {
 
   template <typename type_>
   auto chain<type_>::_resize(type_ &origin, path_span_ path,
-                             signed long long size,
+                             ptrdiff_t size,
                              type_ const &def) noexcept -> bool {
     if (path.empty())
       return origin._resize(size, def);

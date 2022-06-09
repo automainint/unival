@@ -90,9 +90,9 @@ namespace unival {
   auto to_string(unival const &value) noexcept -> optional<u8string> {
     auto result = u8string {};
 
-    if (!print(value, [&](u8string_view s) -> signed long long {
+    if (!print(value, [&](u8string_view s) -> ptrdiff_t {
           result.append(s.begin(), s.end());
-          return static_cast<signed long long>(s.size());
+          return static_cast<ptrdiff_t>(s.size());
         }))
       return nullopt;
 

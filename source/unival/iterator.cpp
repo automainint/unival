@@ -6,7 +6,7 @@
 namespace unival {
   template <typename type_>
   iterator<type_>::iterator(type_ const &val,
-                            signed long long index) noexcept
+                            ptrdiff_t index) noexcept
       : m_value(&val), m_index(index < 0 ? val.get_size() : index) { }
 
   template <typename type_>

@@ -172,22 +172,21 @@ namespace unival {
     return span<int8_t const> { v.begin(), v.end() };
   }
 
-  auto unival::get_size() const noexcept -> signed long long {
+  auto unival::get_size() const noexcept -> ptrdiff_t {
     if (is_vector())
-      return static_cast<signed long long>(
+      return static_cast<ptrdiff_t>(
           std::get<n_vector>(m_value).size());
     if (is_composite())
-      return static_cast<signed long long>(
+      return static_cast<ptrdiff_t>(
           std::get<n_composite>(m_value).size());
     return 0;
   }
 
-  auto unival::resize(signed long long size) const noexcept
-      -> unival {
+  auto unival::resize(ptrdiff_t size) const noexcept -> unival {
     return resize(size, unival {});
   }
 
-  auto unival::resize(signed long long size,
+  auto unival::resize(ptrdiff_t size,
                       unival const &def) const noexcept -> unival {
     auto val = unival { *this };
     if (!val._resize(size, def))
@@ -195,8 +194,7 @@ namespace unival {
     return val;
   }
 
-  auto unival::get(signed long long index) const noexcept
-      -> unival const & {
+  auto unival::get(ptrdiff_t index) const noexcept -> unival const & {
     if (!is_vector())
       return *_error_ptr();
     auto const &v = std::get<n_vector>(m_value);
@@ -219,12 +217,12 @@ namespace unival {
     return i->second;
   }
 
-  auto unival::get_by_key(signed long long key) const noexcept
+  auto unival::get_by_key(ptrdiff_t key) const noexcept
       -> unival const & {
     return get(unival { key });
   }
 
-  auto unival::set(signed long long index,
+  auto unival::set(ptrdiff_t index,
                    unival const &value) const noexcept -> unival {
     auto val = unival { *this };
     if (!val._set(index, value))
@@ -240,14 +238,13 @@ namespace unival {
     return val;
   }
 
-  auto unival::set_by_key(signed long long key,
+  auto unival::set_by_key(ptrdiff_t key,
                           unival const &value) const noexcept
       -> unival {
     return set(unival { key }, value);
   }
 
-  auto unival::remove(signed long long index) const noexcept
-      -> unival {
+  auto unival::remove(ptrdiff_t index) const noexcept -> unival {
     auto val = unival { *this };
     if (!val._remove(index))
       return _error();
@@ -261,8 +258,7 @@ namespace unival {
     return val;
   }
 
-  auto unival::remove_by_key(signed long long key) const noexcept
-      -> unival {
+  auto unival::remove_by_key(ptrdiff_t key) const noexcept -> unival {
     return remove(unival { key });
   }
 
@@ -278,7 +274,7 @@ namespace unival {
     return iterator<unival> { *this, get_size() };
   }
 
-  auto unival::operator[](signed long long index) const noexcept
+  auto unival::operator[](ptrdiff_t index) const noexcept
       -> unival const & {
     return get(index);
   }
@@ -309,7 +305,7 @@ namespace unival {
     return &val;
   }
 
-  auto unival::_check(signed long long index) const noexcept -> bool {
+  auto unival::_check(ptrdiff_t index) const noexcept -> bool {
     if (!is_vector())
       return false;
     auto const &v = std::get<n_vector>(m_value);
@@ -327,7 +323,7 @@ namespace unival {
     return i != comp.end() && i->first == key;
   }
 
-  auto unival::_get(signed long long index) noexcept -> unival & {
+  auto unival::_get(ptrdiff_t index) noexcept -> unival & {
     auto &v = std::get<n_vector>(m_value);
     return v[index];
   }
@@ -341,8 +337,8 @@ namespace unival {
     return i->second;
   }
 
-  auto unival::_set(signed long long index,
-                    unival const &value) noexcept -> bool {
+  auto unival::_set(ptrdiff_t index, unival const &value) noexcept
+      -> bool {
     if (!is_vector())
       return false;
     if (index < 0)
@@ -372,8 +368,8 @@ namespace unival {
     return true;
   }
 
-  auto unival::_resize(signed long long size,
-                       unival const &def) noexcept -> bool {
+  auto unival::_resize(ptrdiff_t size, unival const &def) noexcept
+      -> bool {
     if (size < 0)
       return false;
     if (!is_vector() && !is_empty())
@@ -387,7 +383,7 @@ namespace unival {
     return true;
   }
 
-  auto unival::_remove(signed long long index) noexcept -> bool {
+  auto unival::_remove(ptrdiff_t index) noexcept -> bool {
     if (!is_vector())
       return false;
     auto &v = std::get<n_vector>(m_value);

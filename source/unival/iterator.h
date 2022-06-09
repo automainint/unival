@@ -10,7 +10,7 @@
 namespace unival {
   template <typename type_> class iterator {
   public:
-    iterator(type_ const &val, signed long long index) noexcept;
+    iterator(type_ const &val, ptrdiff_t index) noexcept;
     void operator++() noexcept;
     [[nodiscard]] auto operator->() const noexcept -> type_ const *;
     [[nodiscard]] auto operator*() const noexcept -> type_ const &;
@@ -21,7 +21,7 @@ namespace unival {
     [[nodiscard]] auto _get_ptr() const noexcept -> type_ const *;
 
     type_ const *m_value = nullptr;
-    signed long long m_index = 0;
+    ptrdiff_t m_index = 0;
   };
 }
 
