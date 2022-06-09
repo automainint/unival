@@ -216,5 +216,17 @@ namespace unival::test {
             { unival { 44 }, unival { 45 } },
             { unival { 46 }, unival { 47 } } } },
         [i = 0](u8string_view) mutable -> bool { return i++ != 3; }));
+    REQUIRE(!print(
+        unival { vector<pair<unival, unival>> {
+            { unival { 42 }, unival { 43 } },
+            { unival { 44 }, unival { 45 } },
+            { unival { 46 }, unival { 47 } } } },
+        [i = 0](u8string_view) mutable -> bool { return i++ != 4; }));
+    REQUIRE(!print(
+        unival { vector<pair<unival, unival>> {
+            { unival { 42 }, unival { 43 } },
+            { unival { 44 }, unival { 45 } },
+            { unival { 46 }, unival { 47 } } } },
+        [i = 0](u8string_view) mutable -> bool { return i++ != 5; }));
   }
 }
