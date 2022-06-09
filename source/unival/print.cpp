@@ -147,6 +147,28 @@ namespace unival {
     return !need_brackets || write(u8"]");
   }
 
+  [[nodiscard]] auto
+  print_composite(unival const &value,
+                  fn_write_u8 const &write) noexcept -> bool {
+    if (!write(u8"{"))
+      return false;
+    bool first = true;
+    for (auto const &key : value) {
+      if (!first) {
+        if (!write(u8" "))
+          return false;
+      } else
+        first = false;
+      if (!print_impl(key, write, false))
+        return false;
+      if (!write(u8":"))
+        return false;
+      if (!print_impl(value.get(key), write, false))
+        return false;
+    }
+    return write(u8"}");
+  }
+
   auto print_impl(unival const &value, fn_write_u8 const &write,
                   bool is_nested_vector) noexcept -> bool {
     if (value.is_empty())
@@ -167,6 +189,8 @@ namespace unival {
       return print_byte_array(value.get_bytes().value(), write);
     if (value.is_vector())
       return print_vector(value, write, is_nested_vector);
+    if (value.is_composite())
+      return print_composite(value, write);
     return false;
   }
 
