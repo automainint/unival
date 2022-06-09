@@ -9,7 +9,7 @@
 #include <functional>
 
 namespace unival {
-  using fn_write_u8 = std::function<ptrdiff_t(std::u8string_view)>;
+  using fn_write_u8 = std::function<bool(std::u8string_view)>;
 
   [[nodiscard]] auto print(unival const &value,
                            fn_write_u8 const &write) noexcept -> bool;
