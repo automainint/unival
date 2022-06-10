@@ -28,14 +28,18 @@ target_compile_features(${UNIVAL_LIBRARY} PUBLIC cxx_std_20)
 enable_testing()
 
 if(UNIVAL_ENABLE_TESTING)
-  include(FetchContent)
+  find_package(Catch2 QUIET)
 
-  FetchContent_Declare(
-    Catch2
-    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG v2.13.9)
+  if(NOT Catch2_FOUND)
+    include(FetchContent)
 
-  FetchContent_MakeAvailable(Catch2)
+    FetchContent_Declare(
+      Catch2
+      GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+      GIT_TAG v2.13.9)
+
+    FetchContent_MakeAvailable(Catch2)
+  endif()
 
   add_executable(${UNIVAL_TEST})
 
@@ -46,17 +50,13 @@ if(UNIVAL_ENABLE_TESTING)
 
   if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(
-      ${UNIVAL_TEST} PRIVATE
-      #-fsanitize=undefined,address
+      ${UNIVAL_LIBRARY} PUBLIC
+      -fsanitize=undefined,address
       --coverage -O0 -g)
     target_link_options(
-      ${UNIVAL_TEST} PRIVATE
-      #-fsanitize=undefined,address
+      ${UNIVAL_LIBRARY} PUBLIC
+      -fsanitize=undefined,address
       --coverage)
-  endif()
-
-  if(MSVC)
-    target_compile_options(${UNIVAL_TEST} PRIVATE /Od)
   endif()
 
   add_test(
