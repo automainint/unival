@@ -11,10 +11,19 @@
 namespace unival {
   using fn_write_u8 = std::function<bool(std::u8string_view)>;
 
-  [[nodiscard]] auto print(unival const &value,
-                           fn_write_u8 const &write) noexcept -> bool;
+  struct mode_tag {
+    bool is_pretty;
+  };
 
-  [[nodiscard]] auto to_string(unival const &value) noexcept
+  static constexpr auto pretty = mode_tag { true };
+  static constexpr auto compact = mode_tag { false };
+
+  [[nodiscard]] auto print(unival const &value,
+                           fn_write_u8 const &write,
+                           mode_tag mode = compact) noexcept -> bool;
+
+  [[nodiscard]] auto to_string(unival const &value,
+                               mode_tag mode = compact) noexcept
       -> std::optional<std::u8string>;
 }
 

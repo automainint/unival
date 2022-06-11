@@ -7,6 +7,7 @@ FetchContent_Declare(
   unival
   GIT_REPOSITORY https://github.com/automainint/unival.git
   GIT_TAG dev)
+set(UNIVAL_ENABLE_TESTING OFF)
 FetchContent_MakeAvailable(unival)
 
 add_executable(${NAME})

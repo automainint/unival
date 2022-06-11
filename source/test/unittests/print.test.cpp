@@ -222,4 +222,107 @@ namespace unival::test {
                              { unival { 46 }, unival { 47 } } } },
         [i = 0](u8string_view) mutable -> bool { return i++ != 5; }));
   }
+
+  TEST_CASE("Pretty print empty") {
+    REQUIRE(to_string(unival {}, pretty) == u8"{ }");
+  }
+
+  TEST_CASE("Pretty print byte array empty") {
+    REQUIRE(to_string(unival { bytes {} }, pretty) == u8":: { }");
+  }
+
+  TEST_CASE("Pretty print byte array") {
+    REQUIRE(to_string(unival { bytes { 1, 2, 3, 4, 0x1f, -8 } },
+                      pretty) == u8":: {\n"
+                                 "  01 02 03 04 1f f8\n"
+                                 "}");
+  }
+
+  TEST_CASE("Pretty print big byte array") {
+    REQUIRE(to_string(unival { bytes {
+                          0,    1,    2,    3,    4,    5,    6,
+                          7,    8,    9,    0xa,  0xb,  0xc,  0xd,
+                          0xe,  0xf,  0x10, 0x11, 0x12, 0x13, 0x14,
+                          0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b,
+                          0x1c, 0x1d, 0x1e, 0x1f } },
+                      pretty) ==
+            u8":: {\n"
+            "  00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f\n"
+            "  10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f\n"
+            "}");
+  }
+
+  TEST_CASE("Pretty print empty vector") {
+    REQUIRE(to_string(unival { vector {} }, pretty) == u8"[ ]");
+  }
+
+  TEST_CASE("Pretty print 1-vector") {
+    REQUIRE(to_string(unival { vector { unival { 42 } } }, pretty) ==
+            u8"[\n"
+            u8"  42\n"
+            u8"]");
+  }
+
+  TEST_CASE("Pretty print 3-vector") {
+    REQUIRE(to_string(unival { vector { unival { 42 }, unival { 43 },
+                                        unival { 44 } } },
+                      pretty) == u8"[\n"
+                                 u8"  42,\n"
+                                 u8"  43,\n"
+                                 u8"  44\n"
+                                 u8"]");
+  }
+
+  TEST_CASE("Pretty print empty composite") {
+    REQUIRE(to_string(unival { composite {} }, pretty) == u8"{ }");
+  }
+
+  TEST_CASE("Pretty print 1-composite") {
+    REQUIRE(to_string(unival { composite {
+                          { unival { 42 }, unival { 43 } },
+                      } },
+                      pretty) == u8"{\n"
+                                 u8"  42: 43;\n"
+                                 u8"}");
+  }
+
+  TEST_CASE("Pretty print 3-composite") {
+    REQUIRE(to_string(unival { composite {
+                          { unival { 42 }, unival { 43 } },
+                          { unival { 44 }, unival { 45 } },
+                          { unival { 46 }, unival { 47 } } } },
+                      pretty) == u8"{\n"
+                                 u8"  42: 43;\n"
+                                 u8"  44: 45;\n"
+                                 u8"  46: 47;\n"
+                                 u8"}");
+  }
+
+  TEST_CASE("Pretty print nested") {
+    REQUIRE(
+        to_string(unival { composite {
+                      { unival { 42 }, unival { 43 } },
+                      { unival { 44 }, unival { bytes { 1, 2, 3 } } },
+                      { unival { 45 },
+                        unival { vector { unival { 1 }, unival { 2 },
+                                          unival { 3 } } } },
+                      { unival { 46 }, unival { composite { {
+                                           unival { 1 },
+                                           unival { 2 },
+                                       } } } } } },
+                  pretty) == u8"{\n"
+                             u8"  42: 43;\n"
+                             u8"  44: :: {\n"
+                             u8"    01 02 03\n"
+                             u8"  };\n"
+                             u8"  45: [\n"
+                             u8"    1,\n"
+                             u8"    2,\n"
+                             u8"    3\n"
+                             u8"  ];\n"
+                             u8"  46: {\n"
+                             u8"    1: 2;\n"
+                             u8"  };\n"
+                             u8"}");
+  }
 }
