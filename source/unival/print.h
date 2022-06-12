@@ -12,11 +12,18 @@ namespace unival {
   using fn_write_u8 = std::function<bool(std::u8string_view)>;
 
   struct mode_tag {
-    bool is_pretty;
+    bool is_pretty : 1;
+    bool is_json : 1;
   };
 
-  static constexpr auto pretty = mode_tag { true };
-  static constexpr auto compact = mode_tag { false };
+  static constexpr auto compact =
+      mode_tag { .is_pretty = false, .is_json = false };
+  static constexpr auto pretty =
+      mode_tag { .is_pretty = true, .is_json = false };
+  static constexpr auto json_compact =
+      mode_tag { .is_pretty = false, .is_json = true };
+  static constexpr auto json_pretty =
+      mode_tag { .is_pretty = true, .is_json = true };
 
   [[nodiscard]] auto print(unival const &value,
                            fn_write_u8 const &write,

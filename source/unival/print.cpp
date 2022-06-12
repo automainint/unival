@@ -160,9 +160,7 @@ namespace unival {
       -> bool {
     if (mode.is_pretty && value.get_size() == 0)
       return write(u8"[ ]");
-    bool need_brackets =
-        mode.is_pretty || is_nested_vector || value.get_size() < 2;
-    if (need_brackets && !write(u8"["))
+    if (!write(u8"["))
       return false;
     if (mode.is_pretty && !write(u8"\n"))
       return false;
@@ -178,7 +176,7 @@ namespace unival {
     }
     if (mode.is_pretty && !write_indent(write, indent))
       return false;
-    return !need_brackets || write(u8"]");
+    return write(u8"]");
   }
 
   [[nodiscard]] auto print_composite(unival const &value,
@@ -192,12 +190,13 @@ namespace unival {
     if (mode.is_pretty && !write(u8"\n"))
       return false;
     bool first = true;
+    auto i = ptrdiff_t {};
     for (auto const &key : value) {
       if (mode.is_pretty) {
         if (!write_indent(write, indent + 2))
           return false;
       } else if (!first) {
-        if (!write(u8" "))
+        if (!mode.is_json && !write(u8" "))
           return false;
       } else
         first = false;
@@ -209,7 +208,12 @@ namespace unival {
         return false;
       if (!print_impl(value.get(key), write, false, mode, indent + 2))
         return false;
-      if (mode.is_pretty && !write(u8";\n"))
+      if (mode.is_json) {
+        if (++i != value.get_size() && !write(u8","))
+          return false;
+        if (mode.is_pretty && !write(u8"\n"))
+          return false;
+      } else if (mode.is_pretty && !write(u8";\n"))
         return false;
     }
     if (mode.is_pretty && !write_indent(write, indent))
@@ -230,7 +234,7 @@ namespace unival {
       return print_float(value.get_float().value(), write);
     if (value.is_string()) {
       auto str = value.get_string().value();
-      if (is_id_string(str))
+      if (!mode.is_json && is_id_string(str))
         return print_id_string(str, write);
       return print_string(str, write);
     }

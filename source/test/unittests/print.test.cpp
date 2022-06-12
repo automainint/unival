@@ -151,14 +151,14 @@ namespace unival::test {
                 unival { 42 },
                 unival { 43 },
                 unival { 44 },
-            } }) == u8"42,43,44");
+            } }) == u8"[42,43,44]");
   }
 
   TEST_CASE("Print nested vector") {
     REQUIRE(to_string(unival { vector {
                 unival { 42 },
                 unival { vector { unival { 43 }, unival { 44 } } },
-                unival { 45 } } }) == u8"42,[43,44],45");
+                unival { 45 } } }) == u8"[42,[43,44],45]");
   }
 
   TEST_CASE("Print vector may fail") {
@@ -298,6 +298,20 @@ namespace unival::test {
                                  u8"}");
   }
 
+  TEST_CASE("Compact print nested") {
+    REQUIRE(to_string(unival { composite {
+                { unival { 42 }, unival { 43 } },
+                { unival { 44 }, unival { bytes { 1, 2, 3 } } },
+                { unival { 45 },
+                  unival { vector { unival { 1 }, unival { 2 },
+                                    unival { 3 } } } },
+                { unival { 46 }, unival { composite { {
+                                     unival { 1 },
+                                     unival { 2 },
+                                 } } } } } }) ==
+            u8"{42:43 44:::{01 02 03} 45:[1,2,3] 46:{1:2}}");
+  }
+
   TEST_CASE("Pretty print nested") {
     REQUIRE(
         to_string(unival { composite {
@@ -324,5 +338,44 @@ namespace unival::test {
                              u8"    1: 2;\n"
                              u8"  };\n"
                              u8"}");
+  }
+
+  TEST_CASE("Json print nested") {
+    REQUIRE(
+        to_string(unival { composite {
+                      { unival { u8"42" }, unival { 43 } },
+                      { unival { u8"44" },
+                        unival { vector { unival { 1 }, unival { 2 },
+                                          unival { 3 } } } },
+                      { unival { u8"45" }, unival { composite { {
+                                               unival { u8"1" },
+                                               unival { 2 },
+                                           } } } } } },
+                  json_compact) ==
+        u8"{\"42\":43,\"44\":[1,2,3],\"45\":{\"1\":2}}");
+  }
+
+  TEST_CASE("Json pretty print nested") {
+    REQUIRE(
+        to_string(unival { composite {
+                      { unival { u8"42" }, unival { 43 } },
+                      { unival { u8"44" },
+                        unival { vector { unival { 1 }, unival { 2 },
+                                          unival { 3 } } } },
+                      { unival { u8"45" }, unival { composite { {
+                                               unival { u8"1" },
+                                               unival { 2 },
+                                           } } } } } },
+                  json_pretty) == u8"{\n"
+                                  u8"  \"42\": 43,\n"
+                                  u8"  \"44\": [\n"
+                                  u8"    1,\n"
+                                  u8"    2,\n"
+                                  u8"    3\n"
+                                  u8"  ],\n"
+                                  u8"  \"45\": {\n"
+                                  u8"    \"1\": 2\n"
+                                  u8"  }\n"
+                                  u8"}");
   }
 }
