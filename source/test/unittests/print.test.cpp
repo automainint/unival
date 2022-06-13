@@ -124,17 +124,12 @@ namespace unival::test {
   }
 
   TEST_CASE("Print byte may fail") {
-    REQUIRE(!print(unival { bytes { 1, 2, 3, 4, 0x1f, -8 } },
-                   [](u8string_view) -> bool { return false; }));
-    REQUIRE(!print(
-        unival { bytes { 1, 2, 3, 4, 0x1f, -8 } },
-        [i = 0](u8string_view) mutable -> bool { return i++ != 1; }));
-    REQUIRE(!print(
-        unival { bytes { 1, 2, 3, 4, 0x1f, -8 } },
-        [i = 0](u8string_view) mutable -> bool { return i++ != 2; }));
-    REQUIRE(!print(
-        unival { bytes { 1, 2, 3, 4, 0x1f, -8 } },
-        [i = 0](u8string_view) mutable -> bool { return i++ != 3; }));
+    for (int fail_index = 0; fail_index < 10; fail_index++) {
+      REQUIRE(!print(unival { bytes { 1, 2, 3, 4, 0x1f, -8 } },
+                     [&, i = 0](u8string_view) mutable -> bool {
+                       return i++ != fail_index;
+                     }));
+    }
   }
 
   TEST_CASE("Print empty vector") {
@@ -162,18 +157,20 @@ namespace unival::test {
   }
 
   TEST_CASE("Print vector may fail") {
-    REQUIRE(!print(unival { vector { unival { 42 } } },
-                   [](u8string_view) -> bool { return false; }));
-    REQUIRE(!print(
-        unival { vector { unival { 42 } } },
-        [i = 0](u8string_view) mutable -> bool { return i++ != 1; }));
-    REQUIRE(!print(
-        unival { vector { unival { 42 } } },
-        [i = 0](u8string_view) mutable -> bool { return i++ != 2; }));
-    REQUIRE(!print(
-        unival {
-            vector { unival { 42 }, unival { 43 }, unival { 44 } } },
-        [i = 0](u8string_view) mutable -> bool { return i++ != 3; }));
+    for (int fail_index = 0; fail_index < 3; fail_index++) {
+      REQUIRE(!print(unival { vector { unival { 42 } } },
+                     [&, i = 0](u8string_view) mutable -> bool {
+                       return i++ != fail_index;
+                     }));
+    }
+
+    for (int fail_index = 0; fail_index < 6; fail_index++) {
+      REQUIRE(!print(unival { vector { unival { 42 }, unival { 43 },
+                                       unival { 44 } } },
+                     [&, i = 0](u8string_view) mutable -> bool {
+                       return i++ != fail_index;
+                     }));
+    }
   }
 
   TEST_CASE("Print empty composite") {
@@ -197,30 +194,22 @@ namespace unival::test {
   }
 
   TEST_CASE("Print composite may fail") {
-    REQUIRE(!print(
-        unival { composite { { unival { 42 }, unival { 43 } } } },
-        [](u8string_view) -> bool { return false; }));
-    REQUIRE(!print(
-        unival { composite { { unival { 42 }, unival { 43 } } } },
-        [i = 0](u8string_view) mutable -> bool { return i++ != 1; }));
-    REQUIRE(!print(
-        unival { composite { { unival { 42 }, unival { 43 } } } },
-        [i = 0](u8string_view) mutable -> bool { return i++ != 2; }));
-    REQUIRE(!print(
-        unival { composite { { unival { 42 }, unival { 43 } },
-                             { unival { 44 }, unival { 45 } },
-                             { unival { 46 }, unival { 47 } } } },
-        [i = 0](u8string_view) mutable -> bool { return i++ != 3; }));
-    REQUIRE(!print(
-        unival { composite { { unival { 42 }, unival { 43 } },
-                             { unival { 44 }, unival { 45 } },
-                             { unival { 46 }, unival { 47 } } } },
-        [i = 0](u8string_view) mutable -> bool { return i++ != 4; }));
-    REQUIRE(!print(
-        unival { composite { { unival { 42 }, unival { 43 } },
-                             { unival { 44 }, unival { 45 } },
-                             { unival { 46 }, unival { 47 } } } },
-        [i = 0](u8string_view) mutable -> bool { return i++ != 5; }));
+    for (int fail_index = 0; fail_index < 3; fail_index++) {
+      REQUIRE(!print(
+          unival { composite { { unival { 42 }, unival { 43 } } } },
+          [&, i = 0](u8string_view) mutable -> bool {
+            return i++ != fail_index;
+          }));
+    }
+    for (int fail_index = 0; fail_index < 6; fail_index++) {
+      REQUIRE(!print(
+          unival { composite { { unival { 42 }, unival { 43 } },
+                               { unival { 44 }, unival { 45 } },
+                               { unival { 46 }, unival { 47 } } } },
+          [&, i = 0](u8string_view) mutable -> bool {
+            return i++ != fail_index;
+          }));
+    }
   }
 
   TEST_CASE("Pretty print empty") {
@@ -344,38 +333,118 @@ namespace unival::test {
     REQUIRE(
         to_string(unival { composite {
                       { unival { u8"42" }, unival { 43 } },
-                      { unival { u8"44" },
+                      { unival { u8"foo" },
                         unival { vector { unival { 1 }, unival { 2 },
                                           unival { 3 } } } },
-                      { unival { u8"45" }, unival { composite { {
-                                               unival { u8"1" },
-                                               unival { 2 },
-                                           } } } } } },
+                      { unival { u8"bar" }, unival { composite { {
+                                                unival { u8"1" },
+                                                unival { 2 },
+                                            } } } } } },
                   json_compact) ==
-        u8"{\"42\":43,\"44\":[1,2,3],\"45\":{\"1\":2}}");
+        u8"{\"42\":43,\"bar\":{\"1\":2},\"foo\":[1,2,3]}");
   }
 
   TEST_CASE("Json pretty print nested") {
     REQUIRE(
         to_string(unival { composite {
                       { unival { u8"42" }, unival { 43 } },
-                      { unival { u8"44" },
+                      { unival { u8"foo" },
                         unival { vector { unival { 1 }, unival { 2 },
                                           unival { 3 } } } },
-                      { unival { u8"45" }, unival { composite { {
-                                               unival { u8"1" },
-                                               unival { 2 },
-                                           } } } } } },
+                      { unival { u8"bar" }, unival { composite { {
+                                                unival { u8"1" },
+                                                unival { 2 },
+                                            } } } } } },
                   json_pretty) == u8"{\n"
                                   u8"  \"42\": 43,\n"
-                                  u8"  \"44\": [\n"
+                                  u8"  \"bar\": {\n"
+                                  u8"    \"1\": 2\n"
+                                  u8"  },\n"
+                                  u8"  \"foo\": [\n"
                                   u8"    1,\n"
                                   u8"    2,\n"
                                   u8"    3\n"
-                                  u8"  ],\n"
-                                  u8"  \"45\": {\n"
-                                  u8"    \"1\": 2\n"
-                                  u8"  }\n"
+                                  u8"  ]\n"
                                   u8"}");
+  }
+
+  TEST_CASE("Print complex unival may fail") {
+    for (int fail_index = 0; fail_index < 60; fail_index++) {
+      REQUIRE(!print(
+          unival { composite {
+              { unival { 42 }, unival { u8"\"" } },
+              { unival { 44 }, unival { bytes { 1, 2, 3 } } },
+              { unival { 45 },
+                unival { vector { unival { 1 }, unival { 2 },
+                                  unival { 3 }, unival { 4 } } } },
+              { unival { 46 },
+                unival {
+                    composite { { unival { 1 }, unival { 2 } } } } },
+              { unival { 47 }, unival { 1 } },
+              { unival { 48 }, unival { 1 } },
+              { unival { 49 },
+                unival { bytes { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                                 12 } } } } },
+          [&, i = 0](u8string_view) mutable -> bool {
+            return i++ != fail_index;
+          }));
+
+      REQUIRE(!print(
+          unival { composite {
+              { unival { 42 }, unival { bytes { int8_t { 1 } } } },
+              { unival { 43 },
+                unival {
+                    composite { { unival { 1 }, unival { 2 } } } } },
+              { unival { 44 }, unival { vector { unival { 1 } } } },
+              { unival { 45 }, unival { 1 } },
+              { unival { 46 }, unival { 1 } },
+              { unival { 47 },
+                unival { bytes { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                                 12 } } } } },
+          [&, i = 0](u8string_view) mutable -> bool {
+            return i++ != fail_index;
+          },
+          pretty));
+
+      REQUIRE(!print(
+          unival { composite {
+              { unival { u8"42" }, unival { 43 } },
+              { unival { u8"44" },
+                unival { vector { unival { 1 }, unival { 2 },
+                                  unival { 3 }, unival { 4 } } } },
+              { unival { u8"45" },
+                unival { composite {
+                    { unival { u8"1" }, unival { 2 } } } } },
+              { unival { u8"46" }, unival { 1 } },
+              { unival { u8"47" }, unival { 1 } },
+              { unival { u8"48" }, unival { 1 } },
+              { unival { u8"49" },
+                unival { bytes { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                                 12 } } } } },
+          [&, i = 0](u8string_view) mutable -> bool {
+            return i++ != fail_index;
+          },
+          json_compact));
+
+      REQUIRE(!print(
+          unival { composite {
+              { unival { u8"42" }, unival { 43 } },
+              { unival { u8"44" },
+                unival { vector { unival { 1 }, unival { 2 },
+                                  unival { 3 } } } },
+              { unival { u8"45" },
+                unival { composite {
+                    { unival { u8"1" }, unival { 2 } } } } },
+              { unival { u8"46" }, unival { 1 } },
+              { unival { u8"47" }, unival { 1 } },
+              { unival { u8"48" }, unival { 1 } },
+              { unival { u8"49" },
+                unival { bytes { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                                 12 } } } } },
+          [&, i = 0](u8string_view) mutable -> bool {
+            return i++ != fail_index;
+          },
+          json_pretty));
+    }
   }
 }
