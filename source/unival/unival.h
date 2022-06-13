@@ -186,9 +186,9 @@ namespace unival {
     operator[](std::u8string_view key) const noexcept
         -> unival const &;
 
-  private:
-    [[nodiscard]] static auto _error() noexcept -> unival;
+    [[nodiscard]] static auto error() noexcept -> unival;
 
+  private:
     [[nodiscard]] static auto _error_ptr() noexcept -> unival const *;
 
     [[nodiscard]] auto _check(ptrdiff_t index) const noexcept -> bool;

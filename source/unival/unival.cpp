@@ -190,7 +190,7 @@ namespace unival {
                       unival const &def) const noexcept -> unival {
     auto val = unival { *this };
     if (!val._resize(size, def))
-      return _error();
+      return error();
     return val;
   }
 
@@ -226,7 +226,7 @@ namespace unival {
                    unival const &value) const noexcept -> unival {
     auto val = unival { *this };
     if (!val._set(index, value))
-      return _error();
+      return error();
     return val;
   }
 
@@ -234,7 +234,7 @@ namespace unival {
                    unival const &value) const noexcept -> unival {
     auto val = unival { *this };
     if (!val._set(key, value))
-      return _error();
+      return error();
     return val;
   }
 
@@ -247,14 +247,14 @@ namespace unival {
   auto unival::remove(ptrdiff_t index) const noexcept -> unival {
     auto val = unival { *this };
     if (!val._remove(index))
-      return _error();
+      return error();
     return val;
   }
 
   auto unival::remove(unival const &key) const noexcept -> unival {
     auto val = unival { *this };
     if (!val._remove(key))
-      return _error();
+      return error();
     return val;
   }
 
@@ -294,14 +294,14 @@ namespace unival {
     return get(unival { key });
   }
 
-  auto unival::_error() noexcept -> unival {
+  auto unival::error() noexcept -> unival {
     auto val = unival {};
     val.m_value = error_ {};
     return val;
   }
 
   auto unival::_error_ptr() noexcept -> unival const * {
-    static auto const val = _error();
+    static auto const val = error();
     return &val;
   }
 

@@ -33,7 +33,7 @@ namespace unival {
                                    return _remove(val, op.path);
                                  } },
                       op.action))
-        return unival::_error();
+        return unival::error();
     return val;
   }
 
