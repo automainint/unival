@@ -449,9 +449,8 @@ namespace unival::test {
   }
 
   TEST_CASE("Print non-ASCII characters") {
-    char8_t s[] = { u8'\x1f', u8'\x7f', u8'\xe2',
-                    u8'\x98', u8'\x83', u8'\0' };
-    REQUIRE(to_string(unival { s }) ==
+    char8_t s[] = { 0x1f, 0x7f, 0xe2, 0x98, 0x83, 0 };
+    REQUIRE(to_string(unival { u8string_view { s, 5 } }) ==
             u8"\"\\x1f\\x7f\\xe2\\x98\\x83\"");
   }
 
