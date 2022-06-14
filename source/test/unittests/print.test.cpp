@@ -447,4 +447,18 @@ namespace unival::test {
           json_pretty));
     }
   }
+
+  TEST_CASE("Print non-ASCII characters") {
+    REQUIRE(to_string(unival { u8"\x1f\x7f\xe2\x98\x83" }) ==
+            u8"\"\\x1f\\x7f\\xe2\\x98\\x83\"");
+  }
+
+  TEST_CASE("Print non-ASCII characters may fail") {
+    for (int fail_index = 0; fail_index < 5; fail_index++) {
+      REQUIRE(!print(unival { u8"\x1f\x7f\xe2\x98\x83" },
+                     [&, i = 0](u8string_view) mutable -> bool {
+                       return i++ != fail_index;
+                     }));
+    }
+  }
 }

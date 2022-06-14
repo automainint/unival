@@ -116,6 +116,13 @@ namespace unival {
     if (!write(u8"\""))
       return false;
     for (auto c : value) {
+      if (c < u8'\x20' || c >= u8'\x7f') {
+        if (!write(u8"\\x"))
+          return false;
+        if (!print_byte(static_cast<int8_t>(c), write))
+          return false;
+        continue;
+      }
       if (c == '"' || c == '\\') {
         if (!write(u8"\\"))
           return false;
