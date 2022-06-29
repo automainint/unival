@@ -4,15 +4,8 @@
 #include "unival.h"
 
 namespace unival {
-  using std::optional, std::nullopt, std::string_view,
-      std::u8string_view;
-
-  template <class... types_> struct overload : types_... {
-    using types_::operator()...;
-  };
-
-  template <class... types_>
-  overload(types_...) -> overload<types_...>;
+  using std::optional, std::string_view, std::u8string_view,
+      std::decay_t, std::visit, std::is_same_v;
 
   template <typename type_>
   chain<type_>::chain(type_ const &value) noexcept
@@ -22,18 +15,19 @@ namespace unival {
   auto chain<type_>::commit() noexcept -> type_ {
     auto val = unival { std::move(m_value) };
     for (auto &op : m_ops)
-      if (!std::visit(overload { [&](set_ &v) {
-                                  return _set(val, op.path, v.value);
-                                },
-                                 [&](resize_ &v) {
-                                   return _resize(val, op.path,
-                                                  v.size, v.def);
-                                 },
-                                 [&](remove_ &v) {
-                                   return _remove(val, op.path);
-                                 } },
-                      op.action))
-        return unival::error();
+      if (!visit(
+              [&](auto &v) {
+                using type = decay_t<decltype(v)>;
+                if constexpr (is_same_v<type, set_>)
+                  return _set(val, op.path, v.value);
+                if constexpr (is_same_v<type, resize_>)
+                  return _resize(val, op.path, v.size, v.def);
+                if constexpr (is_same_v<type, remove_>)
+                  return _remove(val, op.path);
+                return false;
+              },
+              op.action))
+        return unival::_error();
     return val;
   }
 
@@ -107,28 +101,33 @@ namespace unival {
       return true;
     }
     if (path.size() == 1)
-      return std::visit(overload { [&](signed long long index) {
-                                    return origin._set(index, value);
-                                  },
-                                   [&](type_ const &key) {
-                                     return origin._set(key, value);
-                                   } },
-                        path[0]);
+      return visit(
+          [&](auto const &v) {
+            using type = decay_t<decltype(v)>;
+            if constexpr (is_same_v<type, ptrdiff_t>)
+              return origin._set(v, value);
+            if constexpr (is_same_v<type, type_>)
+              return origin._set(v, value);
+            return false;
+          },
+          path[0]);
     return std::visit(
-        overload { [&](signed long long index) {
-                    if (!origin._check(index))
-                      return false;
-                    return _set(origin._get(index),
-                                { path.begin() + 1, path.end() },
-                                value);
-                  },
-                   [&](type_ const &key) {
-                     if (!origin._check(key))
-                       return false;
-                     return _set(origin._get(key),
-                                 { path.begin() + 1, path.end() },
-                                 value);
-                   } },
+        [&](auto const &v) {
+          using type = decay_t<decltype(v)>;
+          if constexpr (is_same_v<type, ptrdiff_t>) {
+            if (!origin._check(v))
+              return false;
+            return _set(origin._get(v),
+                        { path.begin() + 1, path.end() }, value);
+          }
+          if constexpr (is_same_v<type, type_>) {
+            if (!origin._check(v))
+              return false;
+            return _set(origin._get(v),
+                        { path.begin() + 1, path.end() }, value);
+          }
+          return false;
+        },
         path[0]);
   }
 
@@ -138,17 +137,19 @@ namespace unival {
                              type_ const &def) noexcept -> bool {
     if (path.empty())
       return origin._resize(size, def);
-    return std::visit(
-        overload { [&](signed long long index) {
-                    return _resize(origin._get(index),
-                                   { path.begin() + 1, path.end() },
-                                   size, def);
-                  },
-                   [&](type_ const &key) {
-                     return _resize(origin._get(key),
-                                    { path.begin() + 1, path.end() },
-                                    size, def);
-                   } },
+    return visit(
+        [&](auto const &v) {
+          using type = decay_t<decltype(v)>;
+          if constexpr (is_same_v<type, ptrdiff_t>)
+            return _resize(origin._get(v),
+                           { path.begin() + 1, path.end() }, size,
+                           def);
+          if constexpr (is_same_v<type, type_>)
+            return _resize(origin._get(v),
+                           { path.begin() + 1, path.end() }, size,
+                           def);
+          return false;
+        },
         path[0]);
   }
 
@@ -158,26 +159,33 @@ namespace unival {
     if (path.empty())
       return false;
     if (path.size() == 1)
-      return std::visit(overload { [&](signed long long index) {
-                                    return origin._remove(index);
-                                  },
-                                   [&](type_ const &key) {
-                                     return origin._remove(key);
-                                   } },
-                        path[0]);
-    return std::visit(
-        overload { [&](signed long long index) {
-                    if (!origin._check(index))
-                      return false;
-                    return _remove(origin._get(index),
-                                   { path.begin() + 1, path.end() });
-                  },
-                   [&](type_ const &key) {
-                     if (!origin._check(key))
-                       return false;
-                     return _remove(origin._get(key),
-                                    { path.begin() + 1, path.end() });
-                   } },
+      return visit(
+          [&](auto const &v) {
+            using type = decay_t<decltype(v)>;
+            if constexpr (is_same_v<type, ptrdiff_t>)
+              return origin._remove(v);
+            if constexpr (is_same_v<type, type_>)
+              return origin._remove(v);
+            return false;
+          },
+          path[0]);
+    return visit(
+        [&](auto const &v) {
+          using type = decay_t<decltype(v)>;
+          if constexpr (is_same_v<type, ptrdiff_t>) {
+            if (!origin._check(v))
+              return false;
+            return _remove(origin._get(v),
+                           { path.begin() + 1, path.end() });
+          }
+          if constexpr (is_same_v<type, type_>) {
+            if (!origin._check(v))
+              return false;
+            return _remove(origin._get(v),
+                           { path.begin() + 1, path.end() });
+          }
+          return false;
+        },
         path[0]);
   }
 

@@ -8,6 +8,7 @@
 #include "iterator.h"
 
 #include <string>
+#include <functional>
 
 namespace unival {
   class unival {
@@ -64,42 +65,36 @@ namespace unival {
     [[nodiscard]] auto operator>(unival const &val) const noexcept
         -> bool;
 
-    [[nodiscard]] auto is_empty() const noexcept -> bool;
-    [[nodiscard]] auto is_error() const noexcept -> bool;
-    [[nodiscard]] auto is_boolean() const noexcept -> bool;
-    [[nodiscard]] auto is_integer() const noexcept -> bool;
-    [[nodiscard]] auto is_float() const noexcept -> bool;
-    [[nodiscard]] auto is_string() const noexcept -> bool;
-    [[nodiscard]] auto is_bytes() const noexcept -> bool;
-    [[nodiscard]] auto is_vector() const noexcept -> bool;
-    [[nodiscard]] auto is_composite() const noexcept -> bool;
+    [[nodiscard]] auto empty() const noexcept -> bool;
+    [[nodiscard]] auto error() const noexcept -> bool;
+    [[nodiscard]] auto vector() const noexcept -> bool;
+    [[nodiscard]] auto composite() const noexcept -> bool;
 
-    [[nodiscard]] auto get_boolean() const noexcept
+    [[nodiscard]] auto boolean() const noexcept
         -> std::optional<bool>;
-    [[nodiscard]] auto get_integer() const noexcept
+    [[nodiscard]] auto integer() const noexcept
         -> std::optional<signed long long>;
-    [[nodiscard]] auto get_uint() const noexcept
+    [[nodiscard]] auto uint() const noexcept
         -> std::optional<unsigned long long>;
-    [[nodiscard]] auto get_float() const noexcept
-        -> std::optional<double>;
-    [[nodiscard]] auto get_string() const noexcept
+    [[nodiscard]] auto real() const noexcept -> std::optional<double>;
+    [[nodiscard]] auto string() const noexcept
         -> std::optional<std::u8string_view>;
-    [[nodiscard]] auto get_bytes() const noexcept
+    [[nodiscard]] auto bytes() const noexcept
         -> std::optional<std::span<int8_t const>>;
 
     /*  Get vector or composite element count.
      */
-    [[nodiscard]] auto get_size() const noexcept -> ptrdiff_t;
+    [[nodiscard]] auto size() const noexcept -> ptrdiff_t;
 
     /*  Resize vector.
      */
-    [[nodiscard]] auto resize(ptrdiff_t size) const noexcept
+    [[nodiscard]] auto resize(ptrdiff_t size) const 
         -> unival;
 
     /*  Resize vector with default element value.
      */
     [[nodiscard]] auto resize(ptrdiff_t size,
-                              unival const &def) const noexcept
+                              unival const &def) const 
         -> unival;
 
     /*  Get vector element by index.
@@ -161,12 +156,12 @@ namespace unival {
      *    commit() - apply changes.
      *
      *  Usage:
-     *  '''
+     *  ```
      *  new_val = val.edit()
      *    .set(0, elem1)
      *    .set(1, elem2)
      *    .commit();
-     *  '''
+     *  ```
      */
     [[nodiscard]] auto edit() const noexcept -> chain<unival>;
 
@@ -186,7 +181,7 @@ namespace unival {
     operator[](std::u8string_view key) const noexcept
         -> unival const &;
 
-    [[nodiscard]] static auto error() noexcept -> unival;
+    [[nodiscard]] static auto _error() noexcept -> unival;
 
   private:
     [[nodiscard]] static auto _error_ptr() noexcept -> unival const *;
@@ -207,23 +202,11 @@ namespace unival {
                             unival const &value) noexcept -> bool;
 
     [[nodiscard]] auto _resize(ptrdiff_t size,
-                               unival const &def) noexcept -> bool;
+                               unival const &def)  -> bool;
 
     [[nodiscard]] auto _remove(ptrdiff_t index) noexcept -> bool;
 
     [[nodiscard]] auto _remove(unival const &key) noexcept -> bool;
-
-    enum index_ {
-      n_empty,
-      n_error,
-      n_boolean,
-      n_integer,
-      n_float,
-      n_string,
-      n_bytes,
-      n_vector,
-      n_composite
-    };
 
     struct error_ {
       auto operator<=>(error_ const &) const noexcept = default;

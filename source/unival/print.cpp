@@ -165,18 +165,18 @@ namespace unival {
                                   bool is_nested_vector,
                                   mode_tag mode, int indent) noexcept
       -> bool {
-    if (mode.is_pretty && value.get_size() == 0)
+    if (mode.is_pretty && value.size() == 0)
       return write(u8"[ ]");
     if (!write(u8"["))
       return false;
     if (mode.is_pretty && !write(u8"\n"))
       return false;
-    for (ptrdiff_t i = 0; i < value.get_size(); i++) {
+    for (ptrdiff_t i = 0; i < value.size(); i++) {
       if (mode.is_pretty && !write_indent(write, indent + 2))
         return false;
       if (!print_impl(value.get(i), write, true, mode, indent + 2))
         return false;
-      if (i + 1 < value.get_size() && !write(u8","))
+      if (i + 1 < value.size() && !write(u8","))
         return false;
       if (mode.is_pretty && !write(u8"\n"))
         return false;
@@ -190,7 +190,7 @@ namespace unival {
                                      fn_write_u8 const &write,
                                      mode_tag mode,
                                      int indent) noexcept -> bool {
-    if (mode.is_pretty && value.get_size() == 0)
+    if (mode.is_pretty && value.size() == 0)
       return write(u8"{ }");
     if (!write(u8"{"))
       return false;
@@ -216,7 +216,7 @@ namespace unival {
       if (!print_impl(value.get(key), write, false, mode, indent + 2))
         return false;
       if (mode.is_json) {
-        if (++i != value.get_size() && !write(u8","))
+        if (++i != value.size() && !write(u8","))
           return false;
         if (mode.is_pretty && !write(u8"\n"))
           return false;
@@ -231,27 +231,27 @@ namespace unival {
   auto print_impl(unival const &value, fn_write_u8 const &write,
                   bool is_nested_vector, mode_tag mode,
                   int indent) noexcept -> bool {
-    if (value.is_empty())
+    if (value.empty())
       return print_empty(write, mode);
-    if (value.is_boolean())
-      return print_boolean(value.get_boolean().value(), write);
-    if (value.is_integer())
-      return print_integer(value.get_integer().value(), write);
-    if (value.is_float())
-      return print_float(value.get_float().value(), write);
-    if (value.is_string()) {
-      auto str = value.get_string().value();
+    if (value.boolean())
+      return print_boolean(value.boolean().value(), write);
+    if (value.integer())
+      return print_integer(value.integer().value(), write);
+    if (value.real())
+      return print_float(value.real().value(), write);
+    if (value.string()) {
+      auto str = value.string().value();
       if (!mode.is_json && is_id_string(str))
         return print_id_string(str, write);
       return print_string(str, write);
     }
-    if (value.is_bytes())
-      return print_byte_array(value.get_bytes().value(), write, mode,
+    if (value.bytes())
+      return print_byte_array(value.bytes().value(), write, mode,
                               indent);
-    if (value.is_vector())
+    if (value.vector())
       return print_vector(value, write, is_nested_vector, mode,
                           indent);
-    if (value.is_composite())
+    if (value.composite())
       return print_composite(value, write, mode, indent);
     return false;
   }

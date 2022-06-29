@@ -15,18 +15,18 @@ namespace unival::test {
 
   TEST_CASE("can not get value from end iterator of int") {
     auto val = unival { 1 };
-    REQUIRE((*val.end()).is_error());
+    REQUIRE((*val.end()).error());
   }
 
   TEST_CASE("can not get value from end iterator of vector") {
     auto val = unival { vector { unival { 1 } } };
-    REQUIRE((*val.end()).is_error());
+    REQUIRE((*val.end()).error());
   }
 
   TEST_CASE("can not get value from end iterator of composite") {
     auto val =
         unival { composite { { unival { 1 }, unival { 2 } } } };
-    REQUIRE((*val.end()).is_error());
+    REQUIRE((*val.end()).error());
   }
 
   TEST_CASE("can iterate over vector unival") {
@@ -49,30 +49,30 @@ namespace unival::test {
     REQUIRE(i == 5);
   }
 
-  TEST_CASE("iterator from out of bounds index will return error") {
+  TEST_CASE("iterator from out of bounds index will return _error") {
     auto val = unival { vector { unival { 1 } } };
     auto i = iterator<unival> { val, -1 };
     auto j = iterator<unival> { val, 2 };
-    REQUIRE((*i).is_error());
-    REQUIRE((*j).is_error());
+    REQUIRE((*i).error());
+    REQUIRE((*j).error());
   }
 
   TEST_CASE("use arrow with iterator of vector unival") {
     auto val = unival { vector { unival { 1 } } };
-    REQUIRE(val.begin()->get_integer() == 1);
+    REQUIRE(val.begin()->integer() == 1);
   }
 
   TEST_CASE("use arrow with iterator of composite unival") {
     auto val =
         unival { composite { { unival { 1 }, unival { 2 } } } };
-    REQUIRE(val.begin()->get_integer() == 1);
+    REQUIRE(val.begin()->integer() == 1);
   }
 
   TEST_CASE("can not use arrow with out of bounds iterator") {
     auto val = unival { vector { unival { 1 } } };
     auto i = iterator<unival> { val, -1 };
     auto j = iterator<unival> { val, 2 };
-    REQUIRE(i->is_error());
-    REQUIRE(j->is_error());
+    REQUIRE(i->error());
+    REQUIRE(j->error());
   }
 }

@@ -11,17 +11,17 @@ namespace unival {
     while (last == u8" ")
       last = read(1);
     if (last != u8"{")
-      return unival::error();
+      return unival::_error();
     last = read(1);
     while (last == u8" ")
       last = read(1);
     if (last != u8"}")
-      return unival::error();
+      return unival::_error();
     last = read(1);
     while (last == u8" ")
       last = read(1);
     if (!last.empty())
-      return unival::error();
+      return unival::_error();
     return {};
   }
 

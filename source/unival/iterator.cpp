@@ -4,10 +4,12 @@
 #include "unival.h"
 
 namespace unival {
+  using std::visit, std::decay_t, std::is_same_v;
+
   template <typename type_>
   iterator<type_>::iterator(type_ const &val,
                             ptrdiff_t index) noexcept
-      : m_value(&val), m_index(index < 0 ? val.get_size() : index) { }
+      : m_value(&val), m_index(index < 0 ? val.size() : index) { }
 
   template <typename type_>
   void iterator<type_>::operator++() noexcept {
@@ -33,12 +35,22 @@ namespace unival {
 
   template <typename type_>
   auto iterator<type_>::_get_ptr() const noexcept -> type_ const * {
-    if (m_index >= m_value->get_size())
-      return type_::_error_ptr();
-    if (m_value->is_vector())
-      return &std::get<unival::n_vector>(m_value->m_value)[m_index];
-    return &std::get<unival::n_composite>(m_value->m_value)[m_index]
-                .first;
+    return visit(
+        [&](auto const &v) -> type_ const * {
+          using type = decay_t<decltype(v)>;
+          if constexpr (is_same_v<type, typename type_::vector_>) {
+            if (m_index >= v.size())
+              return type_::_error_ptr();
+            return &v[m_index];
+          }
+          if constexpr (is_same_v<type, typename type_::composite_>) {
+            if (m_index >= v.size())
+              return type_::_error_ptr();
+            return &v[m_index].first;
+          }
+          return type_::_error_ptr();
+        },
+        m_value->m_value);
   }
 
   template class iterator<unival>;

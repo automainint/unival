@@ -18,7 +18,7 @@ namespace unival::test {
                                          str.begin() + i + size };
               i += size;
               return buf;
-            }).is_empty());
+            }).empty());
   }
 
   TEST_CASE("Parse invalid input") {
@@ -29,19 +29,19 @@ namespace unival::test {
                                          str.begin() + i + size };
               i += size;
               return buf;
-            }).is_error());
+            }).error());
   }
 
   TEST_CASE("Parse empty unival from string") {
-    REQUIRE(parse(u8"{}").is_empty());
+    REQUIRE(parse(u8"{}").empty());
   }
 
   TEST_CASE("Parse invalid unival from string") {
-    REQUIRE(parse(u8"").is_error());
-    REQUIRE(parse(u8"{} foo").is_error());
+    REQUIRE(parse(u8"").error());
+    REQUIRE(parse(u8"{} foo").error());
   }
 
   TEST_CASE("Parse empty unival from string with spaces") {
-    REQUIRE(parse(u8" { } ").is_empty());
+    REQUIRE(parse(u8" { } ").empty());
   }
 }
