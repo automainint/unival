@@ -7,7 +7,8 @@ on:
 
 jobs:
   delete_runs:
-    permissions: write-actions
+    permissions:
+      actions: write
     runs-on: ubuntu-latest
 
     steps:
