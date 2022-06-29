@@ -4,8 +4,8 @@
 #include "unival.h"
 
 namespace unival {
-  using std::optional, std::string_view, std::u8string_view,
-      std::decay_t, std::visit, std::is_same_v;
+  using std::string_view, std::u8string_view, std::decay_t,
+      std::visit, std::is_same_v;
 
   template <typename type_>
   chain<type_>::chain(type_ const &value) noexcept
