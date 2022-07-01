@@ -58,6 +58,8 @@ namespace unival {
 
   [[nodiscard]] auto print_empty(fn_write_u8 const &write,
                                  mode_tag mode) noexcept -> bool {
+    if (mode.is_json)
+      return write(u8"null");
     if (mode.is_pretty)
       return write(u8"{ }");
     return write(u8"{}");

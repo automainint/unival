@@ -27,6 +27,10 @@ namespace unival::test {
     REQUIRE(input_buffer { wrap_string("") }.eof());
   }
 
+  TEST_CASE("input buffer default constructor eof") {
+    REQUIRE(input_buffer {}.eof());
+  }
+
   TEST_CASE("input buffer not empty") {
     REQUIRE(!input_buffer { wrap_string("foo") }.read(3).empty());
   }

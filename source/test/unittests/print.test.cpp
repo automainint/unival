@@ -7,7 +7,7 @@
 namespace unival::test {
   using std::u8string, std::u8string_view;
 
-  TEST_CASE("Print int unival") {
+  TEST_CASE("print int unival") {
     auto val = unival { 42 };
     auto str = u8string {};
     auto put = [&](u8string_view s) -> ptrdiff_t {
@@ -19,109 +19,109 @@ namespace unival::test {
     REQUIRE(str == u8"42");
   }
 
-  TEST_CASE("Print can fail if callback fails") {
+  TEST_CASE("print can fail if callback fails") {
     REQUIRE(!print(unival { 42 },
                    [](u8string_view) -> bool { return false; }));
   }
 
-  TEST_CASE("Print can fail if value is invalid") {
+  TEST_CASE("print can fail if value is invalid") {
     auto put = [](u8string_view) -> bool { return true; };
 
     REQUIRE(!print(unival { 42 }.set(0, unival { 0 }), put));
   }
 
-  TEST_CASE("Print into string") {
+  TEST_CASE("print into string") {
     REQUIRE(to_string(unival { 42 }) == u8"42");
   }
 
-  TEST_CASE("Print to string can fail") {
+  TEST_CASE("print to string can fail") {
     REQUIRE(
         !to_string(unival { 42 }.set(0, unival { 0 })).has_value());
   }
 
-  TEST_CASE("Print empty unival") {
+  TEST_CASE("print empty unival") {
     REQUIRE(to_string(unival {}) == u8"{}");
   }
 
-  TEST_CASE("Print empty can fail") {
+  TEST_CASE("print empty can fail") {
     REQUIRE(!print(unival {},
                    [](u8string_view) -> bool { return false; }));
   }
 
-  TEST_CASE("Print boolean unival") {
+  TEST_CASE("print boolean unival") {
     REQUIRE(to_string(unival { true }) == u8"true");
     REQUIRE(to_string(unival { false }) == u8"false");
   }
 
-  TEST_CASE("Print boolean can fail") {
+  TEST_CASE("print boolean can fail") {
     REQUIRE(!print(unival { true },
                    [](u8string_view) -> bool { return false; }));
   }
 
-  TEST_CASE("Print float unival") {
+  TEST_CASE("print float unival") {
     REQUIRE(to_string(unival { 42.0 }) == u8"42.0");
   }
 
-  TEST_CASE("Print big float unival 1") {
+  TEST_CASE("print big float unival 1") {
     REQUIRE(to_string(unival { 42e10 }) == u8"420000000000.0");
   }
 
-  TEST_CASE("Print big float unival 2") {
+  TEST_CASE("print big float unival 2") {
     REQUIRE(to_string(unival { 42e20 }) == u8"4.2e+21");
   }
 
-  TEST_CASE("Print big float unival 3") {
+  TEST_CASE("print big float unival 3") {
     REQUIRE(to_string(unival { 4e20 }) == u8"4e+20");
   }
 
-  TEST_CASE("Print float can fail") {
+  TEST_CASE("print float can fail") {
     REQUIRE(!print(unival { 4.2 },
                    [](u8string_view) -> bool { return false; }));
   }
 
-  TEST_CASE("Print string unival") {
+  TEST_CASE("print string unival") {
     REQUIRE(to_string(unival { u8"42" }) == u8"\"42\"");
   }
 
-  TEST_CASE("Print string unival with escape") {
+  TEST_CASE("print string unival with escape") {
     REQUIRE(to_string(unival { u8"\"" }) == u8"\"\\\"\"");
   }
 
-  TEST_CASE("Print string can fail 1") {
+  TEST_CASE("print string can fail 1") {
     REQUIRE(!print(unival { u8"42" },
                    [](u8string_view) -> bool { return false; }));
   }
 
-  TEST_CASE("Print string can fail 2") {
+  TEST_CASE("print string can fail 2") {
     REQUIRE(!print(
         unival { u8"42" },
         [n = 0](u8string_view) mutable -> bool { return n++ != 1; }));
   }
 
-  TEST_CASE("Print string can fail 3") {
+  TEST_CASE("print string can fail 3") {
     REQUIRE(!print(unival { u8"42" },
                    [n = 0](u8string_view s) mutable -> bool {
                      return n++ != 2;
                    }));
   }
 
-  TEST_CASE("Print id string without parenthesis") {
+  TEST_CASE("print id string without parenthesis") {
     REQUIRE(to_string(unival { u8"foo" }) == u8"foo");
     REQUIRE(to_string(unival { u8"FooBar" }) == u8"FooBar");
     REQUIRE(to_string(unival { u8"_1foo" }) == u8"_1foo");
     REQUIRE(to_string(unival { u8"_1FooBar" }) == u8"_1FooBar");
   }
 
-  TEST_CASE("Print empty byte array") {
+  TEST_CASE("print empty byte array") {
     REQUIRE(to_string(unival { bytes {} }) == u8"::{}");
   }
 
-  TEST_CASE("Print byte array") {
+  TEST_CASE("print byte array") {
     REQUIRE(to_string(unival { bytes { 1, 2, 3, 4, 0x1f, -8 } }) ==
             u8"::{01 02 03 04 1f f8}");
   }
 
-  TEST_CASE("Print byte may fail") {
+  TEST_CASE("print byte may fail") {
     for (int fail_index = 0; fail_index < 10; fail_index++) {
       REQUIRE(!print(unival { bytes { 1, 2, 3, 4, 0x1f, -8 } },
                      [&, i = 0](u8string_view) mutable -> bool {
@@ -130,16 +130,16 @@ namespace unival::test {
     }
   }
 
-  TEST_CASE("Print empty vector") {
+  TEST_CASE("print empty vector") {
     REQUIRE(to_string(unival { vector {} }) == u8"[]");
   }
 
-  TEST_CASE("Print 1-vector") {
+  TEST_CASE("print 1-vector") {
     REQUIRE(to_string(unival { vector { unival { 42 } } }) ==
             u8"[42]");
   }
 
-  TEST_CASE("Print 3-vector") {
+  TEST_CASE("print 3-vector") {
     REQUIRE(to_string(unival { vector {
                 unival { 42 },
                 unival { 43 },
@@ -147,14 +147,14 @@ namespace unival::test {
             } }) == u8"[42,43,44]");
   }
 
-  TEST_CASE("Print nested vector") {
+  TEST_CASE("print nested vector") {
     REQUIRE(to_string(unival { vector {
                 unival { 42 },
                 unival { vector { unival { 43 }, unival { 44 } } },
                 unival { 45 } } }) == u8"[42,[43,44],45]");
   }
 
-  TEST_CASE("Print vector may fail") {
+  TEST_CASE("print vector may fail") {
     for (int fail_index = 0; fail_index < 3; fail_index++) {
       REQUIRE(!print(unival { vector { unival { 42 } } },
                      [&, i = 0](u8string_view) mutable -> bool {
@@ -171,19 +171,19 @@ namespace unival::test {
     }
   }
 
-  TEST_CASE("Print empty composite") {
+  TEST_CASE("print empty composite") {
     REQUIRE(to_string(unival { composite {
 
             } }) == u8"{}");
   }
 
-  TEST_CASE("Print 1-composite") {
+  TEST_CASE("print 1-composite") {
     REQUIRE(to_string(unival { composite {
                 { unival { 42 }, unival { 43 } },
             } }) == u8"{42:43}");
   }
 
-  TEST_CASE("Print 3-composite") {
+  TEST_CASE("print 3-composite") {
     REQUIRE(to_string(unival {
                 composite { { unival { 42 }, unival { 43 } },
                             { unival { 44 }, unival { 45 } },
@@ -191,7 +191,7 @@ namespace unival::test {
             u8"{42:43 44:45 46:47}");
   }
 
-  TEST_CASE("Print composite may fail") {
+  TEST_CASE("print composite may fail") {
     for (int fail_index = 0; fail_index < 3; fail_index++) {
       REQUIRE(!print(
           unival { composite { { unival { 42 }, unival { 43 } } } },
@@ -210,22 +210,22 @@ namespace unival::test {
     }
   }
 
-  TEST_CASE("Pretty print empty") {
+  TEST_CASE("pretty print empty") {
     REQUIRE(to_string(unival {}, pretty) == u8"{ }");
   }
 
-  TEST_CASE("Pretty print byte array empty") {
+  TEST_CASE("pretty print byte array empty") {
     REQUIRE(to_string(unival { bytes {} }, pretty) == u8":: { }");
   }
 
-  TEST_CASE("Pretty print byte array") {
+  TEST_CASE("pretty print byte array") {
     REQUIRE(to_string(unival { bytes { 1, 2, 3, 4, 0x1f, -8 } },
                       pretty) == u8":: {\n"
                                  "  01 02 03 04 1f f8\n"
                                  "}");
   }
 
-  TEST_CASE("Pretty print big byte array") {
+  TEST_CASE("pretty print big byte array") {
     REQUIRE(to_string(unival { bytes {
                           0,    1,    2,    3,    4,    5,    6,
                           7,    8,    9,    0xa,  0xb,  0xc,  0xd,
@@ -239,18 +239,18 @@ namespace unival::test {
             "}");
   }
 
-  TEST_CASE("Pretty print empty vector") {
+  TEST_CASE("pretty print empty vector") {
     REQUIRE(to_string(unival { vector {} }, pretty) == u8"[ ]");
   }
 
-  TEST_CASE("Pretty print 1-vector") {
+  TEST_CASE("pretty print 1-vector") {
     REQUIRE(to_string(unival { vector { unival { 42 } } }, pretty) ==
             u8"[\n"
             u8"  42\n"
             u8"]");
   }
 
-  TEST_CASE("Pretty print 3-vector") {
+  TEST_CASE("pretty print 3-vector") {
     REQUIRE(to_string(unival { vector { unival { 42 }, unival { 43 },
                                         unival { 44 } } },
                       pretty) == u8"[\n"
@@ -260,11 +260,11 @@ namespace unival::test {
                                  u8"]");
   }
 
-  TEST_CASE("Pretty print empty composite") {
+  TEST_CASE("pretty print empty composite") {
     REQUIRE(to_string(unival { composite {} }, pretty) == u8"{ }");
   }
 
-  TEST_CASE("Pretty print 1-composite") {
+  TEST_CASE("pretty print 1-composite") {
     REQUIRE(to_string(unival { composite {
                           { unival { 42 }, unival { 43 } },
                       } },
@@ -273,7 +273,7 @@ namespace unival::test {
                                  u8"}");
   }
 
-  TEST_CASE("Pretty print 3-composite") {
+  TEST_CASE("pretty print 3-composite") {
     REQUIRE(to_string(unival { composite {
                           { unival { 42 }, unival { 43 } },
                           { unival { 44 }, unival { 45 } },
@@ -285,7 +285,7 @@ namespace unival::test {
                                  u8"}");
   }
 
-  TEST_CASE("Compact print nested") {
+  TEST_CASE("compact print nested") {
     REQUIRE(to_string(unival { composite {
                 { unival { 42 }, unival { 43 } },
                 { unival { 44 }, unival { bytes { 1, 2, 3 } } },
@@ -299,7 +299,7 @@ namespace unival::test {
             u8"{42:43 44:::{01 02 03} 45:[1,2,3] 46:{1:2}}");
   }
 
-  TEST_CASE("Pretty print nested") {
+  TEST_CASE("pretty print nested") {
     REQUIRE(
         to_string(unival { composite {
                       { unival { 42 }, unival { 43 } },
@@ -327,7 +327,12 @@ namespace unival::test {
                              u8"}");
   }
 
-  TEST_CASE("Json print nested") {
+  TEST_CASE("json print empty") {
+    REQUIRE(to_string(unival {}, json_compact) == u8"null");
+    REQUIRE(to_string(unival {}, json_pretty) == u8"null");
+  }
+
+  TEST_CASE("json print nested") {
     REQUIRE(
         to_string(unival { composite {
                       { unival { u8"42" }, unival { 43 } },
@@ -342,7 +347,7 @@ namespace unival::test {
         u8"{\"42\":43,\"bar\":{\"1\":2},\"foo\":[1,2,3]}");
   }
 
-  TEST_CASE("Json pretty print nested") {
+  TEST_CASE("json pretty print nested") {
     REQUIRE(
         to_string(unival { composite {
                       { unival { u8"42" }, unival { 43 } },
@@ -366,7 +371,7 @@ namespace unival::test {
                                   u8"}");
   }
 
-  TEST_CASE("Print complex unival may fail") {
+  TEST_CASE("print complex unival may fail") {
     for (int fail_index = 0; fail_index < 60; fail_index++) {
       REQUIRE(!print(
           unival { composite {
@@ -446,13 +451,13 @@ namespace unival::test {
     }
   }
 
-  TEST_CASE("Print non-ASCII characters") {
+  TEST_CASE("print non-ASCII characters") {
     char8_t s[] = { 0x1f, 0x7f, 0xe2, 0x98, 0x83, 0 };
     REQUIRE(to_string(unival { u8string_view { s, 5 } }) ==
             u8"\"\\x1f\\x7f\\xe2\\x98\\x83\"");
   }
 
-  TEST_CASE("Print non-ASCII characters may fail") {
+  TEST_CASE("print non-ASCII characters may fail") {
     for (int fail_index = 0; fail_index < 5; fail_index++) {
       REQUIRE(!print(unival { u8"\x1f\x7f\xe2\x98\x83" },
                      [&, i = 0](u8string_view) mutable -> bool {
