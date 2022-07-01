@@ -3,18 +3,23 @@
 
 #include "input_buffer.h"
 
+#include <utility>
+
 namespace unival {
   using std::istream, std::make_shared, std::shared_ptr, std::min;
 
-  input_buffer::input_buffer(istream &in) noexcept
-      : m_buffered(make_shared<buffered>(buffered { &in })) { }
+  input_buffer::input_buffer(fn_read read) noexcept
+      : m_buffered(
+            make_shared<buffered>(buffered { std::move(read) })) {
+    buffered_read(1);
+  }
 
   auto input_buffer::eof() const noexcept -> bool {
-    if (m_offset == m_buffered->data.size() || m_buffered->in->eof())
-      return true;
+    if (m_offset < m_buffered->data.size())
+      return false;
 
     buffered_read(1);
-    return m_buffered->in->eof();
+    return m_offset >= m_buffered->data.size();
   }
 
   auto input_buffer::empty() const noexcept -> bool {
@@ -54,10 +59,9 @@ namespace unival {
     auto const bytes_buffered = min(read_offset - m_offset, size);
     auto const bytes_read = size - bytes_buffered;
 
-    m_buffered->data.resize(read_offset + bytes_read);
-    m_buffered->in->read(m_buffered->data.data() + read_offset,
-                         bytes_read);
-    m_buffered->data.resize(read_offset + m_buffered->in->gcount());
+    auto const bytes = m_buffered->read(bytes_read);
+    m_buffered->data.insert(m_buffered->data.end(), bytes.begin(),
+                            bytes.end());
   }
 
   input_buffer::input_buffer(shared_ptr<buffered> const &buf) noexcept

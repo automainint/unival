@@ -4,15 +4,17 @@
 #ifndef UNIVAL_INPUT_BUFFER_H
 #define UNIVAL_INPUT_BUFFER_H
 
-#include <iostream>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace unival {
+  using fn_read = std::function<std::vector<char>(ptrdiff_t)>;
+
   class input_buffer {
   public:
-    explicit input_buffer(std::istream &in) noexcept;
+    explicit input_buffer(fn_read read) noexcept;
 
     [[nodiscard]] auto eof() const noexcept -> bool;
     [[nodiscard]] auto empty() const noexcept -> bool;
@@ -27,7 +29,7 @@ namespace unival {
     void buffered_read(ptrdiff_t size) const noexcept;
 
     struct buffered {
-      std::istream *in;
+      fn_read read;
       std::vector<char> data;
     };
 
