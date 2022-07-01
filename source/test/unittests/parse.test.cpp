@@ -41,6 +41,14 @@ namespace unival::test {
 
   TEST_CASE("parse empty unival from string with spaces") {
     REQUIRE(parse(u8" { } ").empty());
+    REQUIRE(parse(u8"\n{  \t}\n").empty());
+    REQUIRE(parse(u8"\r\n{  \t}\r\n").empty());
+  }
+
+  TEST_CASE("parse empty unival from string with comment") {
+    REQUIRE(parse(u8"{//\n}").empty());
+    REQUIRE(parse(u8"{//\r\n}").empty());
+    REQUIRE(parse(u8"{/* foo bar */}").empty());
   }
 
   TEST_CASE("parse null") { REQUIRE(parse(u8"null").empty()); }

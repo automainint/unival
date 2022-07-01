@@ -20,15 +20,52 @@ namespace unival {
     input_buffer in;
   };
 
+  struct or_eof_tag {
+    bool success_if_eof = false;
+  };
+
+  constexpr static auto or_eof = or_eof_tag { true };
+
+  [[nodiscard]] auto
+  skip_until(optional<input_buffer> buf, string_view s,
+             or_eof_tag tag = or_eof_tag { false }) noexcept
+      -> optional<input_buffer> {
+    if (!buf)
+      return nullopt;
+    auto next = buf;
+    while (!next->eof()) {
+      if (next->read(s.size()).string() == s)
+        return next;
+      next = next->read(1);
+    }
+    if (tag.success_if_eof)
+      return next;
+    return nullopt;
+  }
+
+  [[nodiscard]] auto skip_comment(optional<input_buffer> buf) noexcept
+      -> optional<input_buffer> {
+    if (!buf)
+      return nullopt;
+    auto next = buf->read(2);
+    if (next.string() == "//")
+      return skip_until(next, "\n", or_eof);
+    if (next.string() == "/*")
+      return skip_until(next, "*/")->read(2);
+    return buf;
+  }
+
   [[nodiscard]] auto
   skip_whitespaces(optional<input_buffer> buf) noexcept
       -> optional<input_buffer> {
     if (!buf)
       return nullopt;
-    auto next = buf->read(1);
-    auto s = next.string();
-    return s == " " || s == "\n" || s == "\t" ? skip_whitespaces(next)
-                                              : buf;
+    auto next = skip_comment(buf);
+    auto last = next->read(1);
+    auto s = last.string();
+    return s == " " || s == "\r" || s == "\n" || s == "\t"
+               ? skip_whitespaces(last)
+               : next;
   }
 
   [[nodiscard]] auto skip_string(optional<input_buffer> buf,
@@ -136,7 +173,7 @@ namespace unival {
     auto c = char {};
     tie(sign, next) = read_sign(next);
     next = read_string(next, prefix);
-    auto last = next;
+    auto last = optional<input_buffer> {};
     tie(c, next) = read_one(next, digits);
     if (!next)
       return { unival::_error() };
