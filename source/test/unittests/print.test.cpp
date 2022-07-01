@@ -4,8 +4,6 @@
 #include "../../unival/print.h"
 #include "catch2/catch.hpp"
 
-#include <iostream>
-
 namespace unival::test {
   using std::u8string, std::u8string_view;
 

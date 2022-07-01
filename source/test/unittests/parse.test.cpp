@@ -4,8 +4,6 @@
 #include "../../unival/parse.h"
 #include "catch2/catch.hpp"
 
-#include <iostream>
-
 namespace unival::test {
   using namespace std::string_literals;
   using std::u8string, std::min;

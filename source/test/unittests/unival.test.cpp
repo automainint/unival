@@ -2,7 +2,6 @@
  */
 
 #include "../../unival/unival.h"
-
 #include "catch2/catch.hpp"
 #include <vector>
 
