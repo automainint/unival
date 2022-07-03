@@ -9,7 +9,7 @@
 #include <functional>
 
 namespace unival {
-  using fn_write_u8 = std::function<bool(std::u8string_view)>;
+  using fn_write = std::function<bool(std::string_view)>;
 
   struct mode_tag {
     bool is_pretty : 1;
@@ -25,8 +25,7 @@ namespace unival {
   static constexpr auto json_pretty =
       mode_tag { .is_pretty = true, .is_json = true };
 
-  [[nodiscard]] auto print(unival const &value,
-                           fn_write_u8 const &write,
+  [[nodiscard]] auto print(unival const &value, fn_write const &write,
                            mode_tag mode = compact) noexcept -> bool;
 
   [[nodiscard]] auto to_string(unival const &value,

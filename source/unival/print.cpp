@@ -9,258 +9,267 @@
 
 namespace unival {
   using std::ostringstream, std::string_view, std::u8string_view,
-      std::u8string, std::optional, std::nullopt, std::numeric_limits,
-      std::span, std::setprecision, std::right, std::setw,
-      std::setfill, std::hex, std::noshowbase;
+      std::string, std::u8string, std::optional, std::nullopt,
+      std::numeric_limits, std::span, std::setprecision, std::right,
+      std::setw, std::setfill, std::hex, std::noshowbase;
 
-  [[nodiscard]] auto print_impl(unival const &value,
-                                fn_write_u8 const &write,
-                                bool is_nested_vector, mode_tag mode,
+  [[nodiscard]] auto print_impl(bool status, unival const &value,
+                                fn_write const &write, mode_tag mode,
                                 int indent) noexcept -> bool;
 
-  [[nodiscard]] auto write_indent(fn_write_u8 const &write,
+  [[nodiscard]] auto bind(bool status, auto const &f) noexcept
+      -> bool {
+    if (!status)
+      return false;
+    return f();
+  }
+
+  [[nodiscard]] auto bind_write(bool status, auto const &f,
+                                std::string_view s) noexcept -> bool {
+    if (!status)
+      return false;
+    auto res = f(s);
+    return res;
+  }
+
+  [[nodiscard]] auto write_indent(bool status, fn_write const &write,
                                   int indent) -> bool {
+    if (!status)
+      return false;
     for (int i = 0; i < indent; i++)
-      if (!write(u8" "))
+      if (!write(" "))
         return false;
     return true;
   }
 
-  [[nodiscard]] auto as_u8string(string_view const &s) noexcept
-      -> u8string_view {
-    return u8string_view {
-      reinterpret_cast<char8_t const *>(s.data()), s.size()
-    };
+  [[nodiscard]] auto as_string(u8string_view const &s) noexcept
+      -> string_view {
+    return string_view { reinterpret_cast<char const *>(s.data()),
+                         s.size() };
   }
 
   [[nodiscard]] auto is_id_string(u8string_view const &s) noexcept
       -> bool {
     static const auto id_chars =
-        u8string_view { u8"_abcdefghijklmnopqrstuvwxyz"
-                        u8"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                        u8"0123456789" };
+        string_view { "_abcdefghijklmnopqrstuvwxyz"
+                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                      "0123456789" };
     static const auto id_first =
-        u8string_view { u8"_abcdefghijklmnopqrstuvwxyz"
-                        u8"ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
-
+        string_view { "_abcdefghijklmnopqrstuvwxyz"
+                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
     if (s.empty())
       return false;
-
-    if (id_first.find(s[0]) == u8string_view::npos)
+    if (id_first.find(s[0]) == string_view::npos)
       return false;
-
     for (ptrdiff_t i = 1; i < s.size(); i++)
-      if (id_chars.find(s[i]) == u8string_view::npos)
+      if (id_chars.find(s[i]) == string_view::npos)
         return false;
-
     return true;
   }
 
-  [[nodiscard]] auto print_empty(fn_write_u8 const &write,
+  [[nodiscard]] auto print_empty(bool ok, fn_write const &write,
                                  mode_tag mode) noexcept -> bool {
     if (mode.is_json)
-      return write(u8"null");
+      return bind_write(ok, write, "null");
     if (mode.is_pretty)
-      return write(u8"{ }");
-    return write(u8"{}");
+      return bind_write(ok, write, "{ }");
+    return bind_write(ok, write, "{}");
   }
 
-  [[nodiscard]] auto print_boolean(bool value,
-                                   fn_write_u8 const &write) noexcept
+  [[nodiscard]] auto print_boolean(bool ok, bool value,
+                                   fn_write const &write) noexcept
       -> bool {
     if (value)
-      return write(u8"true");
-    return write(u8"false");
+      return bind_write(ok, write, "true");
+    return bind_write(ok, write, "false");
   }
 
-  [[nodiscard]] auto print_byte(int8_t byte,
-                                fn_write_u8 const &write) noexcept {
+  [[nodiscard]] auto print_byte(bool ok, int8_t byte,
+                                fn_write const &write) noexcept {
     auto out = ostringstream {};
     out << right << setw(2) << setfill('0') << noshowbase << hex
         << static_cast<int>(static_cast<uint8_t>(byte));
     auto str = out.str();
-    return write(as_u8string(str));
+    return bind_write(ok, write, str);
   }
 
-  [[nodiscard]] auto print_integer(signed long long value,
-                                   fn_write_u8 const &write) noexcept
+  [[nodiscard]] auto print_integer(bool ok, signed long long value,
+                                   fn_write const &write) noexcept
       -> bool {
     auto out = ostringstream {};
     out << value;
     auto str = out.str();
-    return write(as_u8string(str));
+    return bind_write(ok, write, str);
   }
 
-  [[nodiscard]] auto print_float(double value,
-                                 fn_write_u8 const &write) noexcept
+  [[nodiscard]] auto print_float(bool ok, double value,
+                                 fn_write const &write) noexcept
       -> bool {
     auto out = ostringstream {};
     auto digits = numeric_limits<decltype(value)>::max_digits10;
     out << setprecision(digits) << value;
     auto str = out.str();
-    if (!write(as_u8string(str)))
-      return false;
+    ok = bind_write(ok, write, str);
     if (str.find('.') == string_view::npos &&
         str.find('e') == string_view::npos)
-      return write(u8".0");
-    return true;
+      ok = bind_write(ok, write, ".0");
+    return ok;
   }
 
-  [[nodiscard]] auto
-  print_id_string(u8string_view const &value,
-                  fn_write_u8 const &write) noexcept -> bool {
-    return write(value);
-  }
-
-  [[nodiscard]] auto print_string(u8string_view const &value,
-                                  fn_write_u8 const &write) noexcept
+  [[nodiscard]] auto print_id_string(bool status,
+                                     string_view const &value,
+                                     fn_write const &write) noexcept
       -> bool {
-    if (!write(u8"\""))
-      return false;
-    for (auto c : value) {
-      if (c < u8'\x20' || c >= u8'\x7f') {
-        if (!write(u8"\\x"))
-          return false;
-        if (!print_byte(static_cast<int8_t>(c), write))
-          return false;
-        continue;
-      }
-      if (c == '"' || c == '\\') {
-        if (!write(u8"\\"))
-          return false;
-      }
-      if (!write({ &c, 1 }))
-        return false;
-    }
-    return write(u8"\"");
+    return bind_write(status, write, value);
   }
 
-  [[nodiscard]] auto print_byte_array(span<int8_t const> value,
-                                      fn_write_u8 const &write,
+  [[nodiscard]] auto print_string(bool status,
+                                  string_view const &value,
+                                  fn_write const &write) noexcept
+      -> bool {
+    return bind(status, [&]() {
+      auto ok = write("\"");
+      for (auto c : value) {
+        if (c < u8'\x20' || c >= u8'\x7f') {
+          ok = bind_write(ok, write, "\\x");
+          ok = print_byte(ok, static_cast<int8_t>(c), write);
+          continue;
+        }
+        if (c == '"' || c == '\\')
+          ok = bind_write(ok, write, "\\");
+        ok = bind_write(ok, write, { &c, 1 });
+      }
+      return bind_write(ok, write, "\"");
+    });
+  }
+
+  [[nodiscard]] auto print_byte_array(bool status,
+                                      span<int8_t const> value,
+                                      fn_write const &write,
                                       mode_tag mode,
                                       int indent) noexcept -> bool {
-    if (value.empty())
-      return write(mode.is_pretty ? u8":: { }" : u8"::{}");
-    if (!write(mode.is_pretty ? u8":: {" : u8"::{"))
-      return false;
-    for (ptrdiff_t i = 0, k = 0; i < value.size(); i++) {
-      auto const b = value[i];
-      if (k == 0 && mode.is_pretty &&
-          (!write(u8"\n") || !write_indent(write, indent + 2)))
-        return false;
-      if (k > 0 && !write(u8" "))
-        return false;
-      if (!print_byte(b, write))
-        return false;
-      k++;
-      if (mode.is_pretty)
-        k = k % 16;
-    }
-    if (mode.is_pretty)
-      if (!write(u8"\n") || !write_indent(write, indent))
-        return false;
-    return write(u8"}");
+    return bind(status, [&]() {
+      if (value.empty())
+        return write(mode.is_pretty ? ":: { }" : "::{}");
+      auto ok = write(mode.is_pretty ? ":: {" : "::{");
+      for (ptrdiff_t i = 0, k = 0; i < value.size(); i++) {
+        auto const b = value[i];
+        if (k == 0 && mode.is_pretty) {
+          ok = bind_write(ok, write, "\n");
+          ok = write_indent(ok, write, indent + 2);
+        }
+        if (k > 0)
+          ok = bind_write(ok, write, " ");
+        ok = print_byte(ok, b, write);
+        k++;
+        if (mode.is_pretty)
+          k = k % 16;
+      }
+      if (mode.is_pretty) {
+        ok = bind_write(ok, write, "\n");
+        ok = write_indent(ok, write, indent);
+      }
+      return bind_write(ok, write, "}");
+    });
   }
 
-  [[nodiscard]] auto print_vector(unival const &value,
-                                  fn_write_u8 const &write,
-                                  bool is_nested_vector,
+  [[nodiscard]] auto print_vector(bool status, unival const &value,
+                                  fn_write const &write,
                                   mode_tag mode, int indent) noexcept
       -> bool {
-    if (mode.is_pretty && value.size() == 0)
-      return write(u8"[ ]");
-    if (!write(u8"["))
-      return false;
-    if (mode.is_pretty && !write(u8"\n"))
-      return false;
-    for (ptrdiff_t i = 0; i < value.size(); i++) {
-      if (mode.is_pretty && !write_indent(write, indent + 2))
-        return false;
-      if (!print_impl(value.get(i), write, true, mode, indent + 2))
-        return false;
-      if (i + 1 < value.size() && !write(u8","))
-        return false;
-      if (mode.is_pretty && !write(u8"\n"))
-        return false;
-    }
-    if (mode.is_pretty && !write_indent(write, indent))
-      return false;
-    return write(u8"]");
+    return bind(status, [&]() {
+      if (mode.is_pretty && value.size() == 0)
+        return write("[ ]");
+      auto ok = write("[");
+      if (mode.is_pretty)
+        ok = bind_write(ok, write, "\n");
+      for (ptrdiff_t i = 0; i < value.size(); i++) {
+        if (mode.is_pretty)
+          ok = write_indent(ok, write, indent + 2);
+        ok = print_impl(ok, value.get(i), write, mode, indent + 2);
+        if (i + 1 < value.size())
+          ok = bind_write(ok, write, ",");
+        if (mode.is_pretty)
+          ok = bind_write(ok, write, "\n");
+      }
+      if (mode.is_pretty)
+        ok = write_indent(ok, write, indent);
+      return bind_write(ok, write, "]");
+    });
   }
 
-  [[nodiscard]] auto print_composite(unival const &value,
-                                     fn_write_u8 const &write,
+  [[nodiscard]] auto print_composite(bool status, unival const &value,
+                                     fn_write const &write,
                                      mode_tag mode,
                                      int indent) noexcept -> bool {
-    if (mode.is_pretty && value.size() == 0)
-      return write(u8"{ }");
-    if (!write(u8"{"))
-      return false;
-    if (mode.is_pretty && !write(u8"\n"))
-      return false;
-    bool first = true;
-    auto i = ptrdiff_t {};
-    for (auto const &key : value) {
-      if (mode.is_pretty) {
-        if (!write_indent(write, indent + 2))
-          return false;
-      } else if (!first) {
-        if (!mode.is_json && !write(u8" "))
-          return false;
-      } else
-        first = false;
-      if (!print_impl(key, write, false, mode, indent + 2))
-        return false;
-      if (!write(u8":"))
-        return false;
-      if (mode.is_pretty && !write(u8" "))
-        return false;
-      if (!print_impl(value.get(key), write, false, mode, indent + 2))
-        return false;
-      if (mode.is_json) {
-        if (++i != value.size() && !write(u8","))
-          return false;
-        if (mode.is_pretty && !write(u8"\n"))
-          return false;
-      } else if (mode.is_pretty && !write(u8";\n"))
-        return false;
-    }
-    if (mode.is_pretty && !write_indent(write, indent))
-      return false;
-    return write(u8"}");
+    return bind(status, [&]() {
+      if (mode.is_pretty && value.size() == 0)
+        return write("{ }");
+      auto ok = write("{");
+      if (mode.is_pretty)
+        ok = bind_write(ok, write, "\n");
+      bool first = true;
+      auto i = ptrdiff_t {};
+      for (auto const &key : value) {
+        if (mode.is_pretty) {
+          ok = write_indent(ok, write, indent + 2);
+        } else if (!first) {
+          if (!mode.is_json)
+            ok = bind_write(ok, write, " ");
+        } else
+          first = false;
+        ok = print_impl(ok, key, write, mode, indent + 2);
+        ok = bind_write(ok, write, ":");
+        if (mode.is_pretty)
+          ok = bind_write(ok, write, " ");
+        ok = print_impl(ok, value.get(key), write, mode, indent + 2);
+        if (mode.is_json) {
+          if (++i != value.size())
+            ok = bind_write(ok, write, ",");
+          if (mode.is_pretty)
+            ok = bind_write(ok, write, "\n");
+        } else if (mode.is_pretty)
+          ok = bind_write(ok, write, ";\n");
+      }
+      if (mode.is_pretty)
+        ok = write_indent(ok, write, indent);
+      ok = bind_write(ok, write, "}");
+      return ok;
+    });
   }
 
-  auto print_impl(unival const &value, fn_write_u8 const &write,
-                  bool is_nested_vector, mode_tag mode,
+  auto print_impl(bool status, unival const &value,
+                  fn_write const &write, mode_tag mode,
                   int indent) noexcept -> bool {
-    if (value.empty())
-      return print_empty(write, mode);
-    if (value.boolean())
-      return print_boolean(value.boolean().value(), write);
-    if (value.integer())
-      return print_integer(value.integer().value(), write);
-    if (value.real())
-      return print_float(value.real().value(), write);
-    if (value.string()) {
-      auto str = value.string().value();
-      if (!mode.is_json && is_id_string(str))
-        return print_id_string(str, write);
-      return print_string(str, write);
-    }
-    if (value.bytes())
-      return print_byte_array(value.bytes().value(), write, mode,
-                              indent);
-    if (value.vector())
-      return print_vector(value, write, is_nested_vector, mode,
-                          indent);
-    if (value.composite())
-      return print_composite(value, write, mode, indent);
-    return false;
+    return bind(status, [&]() {
+      if (value.empty())
+        return print_empty(true, write, mode);
+      if (value.boolean())
+        return print_boolean(true, value.boolean().value(), write);
+      if (value.integer())
+        return print_integer(true, value.integer().value(), write);
+      if (value.real())
+        return print_float(true, value.real().value(), write);
+      if (value.string()) {
+        auto str = value.string().value();
+        if (!mode.is_json && is_id_string(str))
+          return print_id_string(true, as_string(str), write);
+        return print_string(true, as_string(str), write);
+      }
+      if (value.bytes())
+        return print_byte_array(true, value.bytes().value(), write,
+                                mode, indent);
+      if (value.vector())
+        return print_vector(true, value, write, mode, indent);
+      if (value.composite())
+        return print_composite(true, value, write, mode, indent);
+      return false;
+    });
   }
 
-  auto print(unival const &value, fn_write_u8 const &write,
+  auto print(unival const &value, fn_write const &write,
              mode_tag mode) noexcept -> bool {
-    return print_impl(value, write, false, mode, 0);
+    return print_impl(true, value, write, mode, 0);
   }
 
   auto to_string(unival const &value, mode_tag mode) noexcept
@@ -269,7 +278,7 @@ namespace unival {
 
     if (!print(
             value,
-            [&](u8string_view s) -> ptrdiff_t {
+            [&](string_view s) -> ptrdiff_t {
               result.append(s.begin(), s.end());
               return static_cast<ptrdiff_t>(s.size());
             },
