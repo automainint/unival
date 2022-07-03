@@ -5,6 +5,7 @@
 
 #include "input_buffer.h"
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <optional>
 #include <span>
@@ -251,12 +252,11 @@ namespace unival {
 
   [[nodiscard]] auto parse_float(optional<input_buffer> buf) noexcept
       -> parse_result {
-    auto pow = [](long double base, int64_t n) {
-      auto x = static_cast<long double>(1);
-      auto m = n > 0 ? n : -n;
-      for (auto i = int64_t {}; i < m; ++i)
+    auto pow = [](int64_t base, size_t n) {
+      auto x = int64_t { 1 };
+      for (auto i = int64_t {}; i < n; ++i)
         x *= base;
-      return n < 0 ? static_cast<long double>(1) / x : x;
+      return x;
     };
     if (!buf)
       return { unival::_error() };
@@ -289,15 +289,13 @@ namespace unival {
       return { unival::_error() };
     if (!next)
       return { unival::_error() };
-    return {
-      unival { static_cast<double>(
-          (static_cast<long double>(sign * n_int) +
-           static_cast<long double>(convert_digits(
-               s_frac, dec_base, dec_digits, dec_values)) /
-               pow(dec_base, static_cast<int64_t>(s_frac.size()))) *
-          pow(dec_base, n_exp)) },
-      *next
-    };
+    return { unival { static_cast<double>(
+                 (static_cast<long double>(sign * n_int) +
+                  static_cast<long double>(convert_digits(
+                      s_frac, dec_base, dec_digits, dec_values)) /
+                      pow(dec_base, s_frac.size())) *
+                 powl(dec_base, n_exp)) },
+             *next };
   }
 
   [[nodiscard]] auto parse(optional<input_buffer> buf) noexcept
