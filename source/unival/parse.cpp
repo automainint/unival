@@ -252,7 +252,7 @@ namespace unival {
   [[nodiscard]] auto parse_float(optional<input_buffer> buf) noexcept
       -> parse_result {
     auto pow = [](long double base, int64_t n) {
-      auto x = (long double) { 1 };
+      auto x = static_cast<long double>(1);
       auto m = n > 0 ? n : -n;
       for (auto i = int64_t {}; i < m; ++i)
         x *= base;

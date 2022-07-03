@@ -121,7 +121,11 @@ namespace unival::test {
     REQUIRE(parse(u8".42").real() == .42);
   }
 
-  TEST_CASE("parse dot will fail") { REQUIRE(parse(u8".").error()); }
+  TEST_CASE("parse dot or e will fail") {
+    REQUIRE(parse(u8".").error());
+    REQUIRE(parse(u8".e1").error());
+    REQUIRE(parse(u8"1e").error());
+  }
 
   TEST_CASE("parse float with exponent") {
     REQUIRE(parse(u8"42e42").real() == 42e42);
