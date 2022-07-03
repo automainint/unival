@@ -113,4 +113,21 @@ namespace unival::test {
     REQUIRE(parse(u8"-0x1a1f").integer() == -0x1a1f);
     REQUIRE(parse(u8"-0X1A1F").integer() == -0x1a1f);
   }
+
+  TEST_CASE("parse float") {
+    REQUIRE(parse(u8"42.42").real() == 42.42);
+    REQUIRE(parse(u8"42.0042").real() == 42.0042);
+    REQUIRE(parse(u8"42.").real() == 42.);
+    REQUIRE(parse(u8".42").real() == .42);
+  }
+
+  TEST_CASE("parse dot will fail") { REQUIRE(parse(u8".").error()); }
+
+  TEST_CASE("parse float with exponent") {
+    REQUIRE(parse(u8"42e42").real() == 42e42);
+    REQUIRE(parse(u8"42e+2").real() == 42e+2);
+    REQUIRE(parse(u8"42e-2").real() == 42e-2);
+    REQUIRE(parse(u8".42e-4").real() == .42e-4);
+    REQUIRE(parse(u8"4.2e-4").real() == 4.2e-4);
+  }
 }

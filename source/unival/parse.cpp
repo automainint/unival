@@ -13,12 +13,26 @@
 namespace unival {
   using std::optional, std::nullopt, std::u8string_view,
       std::string_view, std::u8string, std::min, std::tie, std::tuple,
-      std::span, std::array;
+      std::span, std::array, std::string;
 
-  struct parse_result {
-    unival value;
-    input_buffer in;
-  };
+  constexpr static auto dec_base = 10;
+  constexpr static auto dec_digits = "0123456789";
+  constexpr static auto dec_values =
+      array { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+
+  constexpr static auto bin_base = 2;
+  constexpr static auto bin_digits = "01";
+  constexpr static auto bin_values = array { 0, 1 };
+
+  constexpr static auto oct_base = 8;
+  constexpr static auto oct_digits = "01234567";
+  constexpr static auto oct_values = array { 0, 1, 2, 3, 4, 5, 6, 7 };
+
+  constexpr static auto hex_base = 16;
+  constexpr static auto hex_digits = "0123456789abcdefABCDEF";
+  constexpr static auto hex_values =
+      array { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10,
+              11, 12, 13, 14, 15, 10, 11, 12, 13, 14, 15 };
 
   struct or_eof_tag {
     bool success_if_eof = false;
@@ -111,6 +125,11 @@ namespace unival {
     return { '\0', nullopt };
   }
 
+  struct parse_result {
+    unival value;
+    input_buffer in;
+  };
+
   [[nodiscard]] auto parse_empty(optional<input_buffer> buf) noexcept
       -> parse_result {
     if (!buf)
@@ -157,55 +176,132 @@ namespace unival {
     return { unival { false }, *next };
   }
 
+  [[nodiscard]] auto parse_digits(optional<input_buffer> buf,
+                                  string_view digits) noexcept
+      -> tuple<string, optional<input_buffer>> {
+    auto value = string {};
+    auto [c, next] = read_one(buf, digits);
+    auto last = optional<input_buffer> {};
+    if (!next)
+      return {};
+    do {
+      value.append(1, c);
+      last = next;
+      tie(c, next) = read_one(next, digits);
+    } while (next);
+    return { value, last };
+  }
+
+  [[nodiscard]] auto
+  convert_digits(string_view value, int base, string_view digits,
+                 span<int const> digit_values) noexcept
+      -> signed long long {
+    auto result = int64_t {};
+    for (auto c : value) {
+      auto i = digits.find(c);
+      result *= base;
+      result += digit_values[i];
+    }
+    return result;
+  }
+
+  [[nodiscard]] auto
+  parse_uint_internal(optional<input_buffer> buf, string_view prefix,
+                      int base, string_view digits,
+                      span<int const> digit_values) noexcept
+      -> tuple<signed long long, optional<input_buffer>> {
+    if (!buf)
+      return {};
+    auto c = char {};
+    auto next = read_string(buf, prefix);
+    auto [number, last] = parse_digits(next, digits);
+    if (!last)
+      return {};
+    return { convert_digits(number, base, digits, digit_values),
+             last };
+  }
+
+  [[nodiscard]] auto
+  parse_int_internal(optional<input_buffer> buf, string_view prefix,
+                     int base, string_view digits,
+                     span<int const> digit_values) noexcept
+      -> tuple<signed long long, optional<input_buffer>> {
+    if (!buf)
+      return {};
+    auto [sign, next] = read_sign(buf);
+    auto [value, last] =
+        parse_uint_internal(next, prefix, base, digits, digit_values);
+    return { sign * value, last };
+  }
+
   [[nodiscard]] auto
   parse_integer(optional<input_buffer> buf, string_view prefix,
                 int base, string_view digits,
                 span<int const> digit_values) noexcept
       -> parse_result {
-    auto digit_value = [&](char c) {
-      return digit_values[digits.find(c)];
-    };
     if (!buf)
       return { unival::_error() };
     auto next = skip_whitespaces(buf);
+    auto [value, last] =
+        parse_int_internal(next, prefix, base, digits, digit_values);
+    if (!last)
+      return { unival::_error() };
+    return { unival { value }, *last };
+  }
+
+  [[nodiscard]] auto parse_float(optional<input_buffer> buf) noexcept
+      -> parse_result {
+    auto pow = [](long double base, int64_t n) {
+      auto x = (long double) { 1 };
+      auto m = n > 0 ? n : -n;
+      for (auto i = int64_t {}; i < m; ++i)
+        x *= base;
+      return n < 0 ? static_cast<long double>(1) / x : x;
+    };
+    if (!buf)
+      return { unival::_error() };
     auto sign = 1;
-    auto value = int64_t {};
-    auto c = char {};
+    auto next = skip_whitespaces(buf);
     tie(sign, next) = read_sign(next);
-    next = read_string(next, prefix);
-    auto last = optional<input_buffer> {};
-    tie(c, next) = read_one(next, digits);
+    auto [n_int, next_int] = parse_uint_internal(
+        next, "", dec_base, dec_digits, dec_values);
+    auto next_frac = optional<input_buffer> {};
+    auto next_exp = optional<input_buffer> {};
+    auto s_frac = string {};
+    if (next_int)
+      next = next_int;
+    auto next_dot = read_string(next, ".");
+    if (next_dot) {
+      next = next_dot;
+      tie(s_frac, next_frac) = parse_digits(next, dec_digits);
+      if (next_frac)
+        next = next_frac;
+    }
+    auto n_exp = int64_t {};
+    if (next_exp = read_string(next, "e"); next_exp) {
+      next = next_exp;
+      tie(n_exp, next) = parse_int_internal(next, "", dec_base,
+                                            dec_digits, dec_values);
+    }
+    if (!next_int && !next_frac)
+      return { unival::_error() };
+    if (!next_dot && !next_exp)
+      return { unival::_error() };
     if (!next)
       return { unival::_error() };
-    do {
-      value = value * base + digit_value(c);
-      last = next;
-      tie(c, next) = read_one(next, digits);
-    } while (next);
-    return { unival { sign * value }, *last };
+    return {
+      unival { static_cast<double>(
+          (static_cast<long double>(sign * n_int) +
+           static_cast<long double>(convert_digits(
+               s_frac, dec_base, dec_digits, dec_values)) /
+               pow(dec_base, static_cast<int64_t>(s_frac.size()))) *
+          pow(dec_base, n_exp)) },
+      *next
+    };
   }
 
   [[nodiscard]] auto parse(optional<input_buffer> buf) noexcept
       -> parse_result {
-    constexpr auto dec_base = 10;
-    constexpr auto dec_digits = "0123456789";
-    constexpr auto dec_values =
-        array { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-
-    constexpr auto bin_base = 2;
-    constexpr auto bin_digits = "01";
-    constexpr auto bin_values = array { 0, 1 };
-
-    constexpr auto oct_base = 8;
-    constexpr auto oct_digits = "01234567";
-    constexpr auto oct_values = array { 0, 1, 2, 3, 4, 5, 6, 7 };
-
-    constexpr auto hex_base = 16;
-    constexpr auto hex_digits = "0123456789abcdefABCDEF";
-    constexpr auto hex_values =
-        array { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10,
-                11, 12, 13, 14, 15, 10, 11, 12, 13, 14, 15 };
-
     if (!buf)
       return { unival::_error() };
     if (auto res = parse_empty(buf); !res.value.error())
@@ -215,6 +311,8 @@ namespace unival {
     if (auto res = parse_true(buf); !res.value.error())
       return res;
     if (auto res = parse_false(buf); !res.value.error())
+      return res;
+    if (auto res = parse_float(buf); !res.value.error())
       return res;
     if (auto res = parse_integer(buf, "0b", bin_base, bin_digits,
                                  bin_values);
