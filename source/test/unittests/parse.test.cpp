@@ -6,7 +6,7 @@
 
 namespace unival::test {
   using namespace std::string_literals;
-  using std::u8string, std::min;
+  using std::u8string, std::min, std::u8string_view;
 
   TEST_CASE("parse empty unival") {
     REQUIRE(parse([str = u8"{}"s, i = ptrdiff_t {}](
@@ -133,5 +133,44 @@ namespace unival::test {
     REQUIRE(parse(u8"42e-2").real() == 42e-2);
     REQUIRE(parse(u8".42e-4").real() == .42e-4);
     REQUIRE(parse(u8"4.2e-4").real() == 4.2e-4);
+  }
+
+  TEST_CASE("parse string") {
+    REQUIRE(parse(u8"\"foo bar\"").string() == u8"foo bar");
+  }
+
+  TEST_CASE("parse string with spaces") {
+    REQUIRE(parse(u8" \"foo bar\" ").string() == u8"foo bar");
+  }
+
+  TEST_CASE("parse string may fail") {
+    REQUIRE(parse(u8"\"").error());
+  }
+
+  TEST_CASE("parse string escaped") {
+    REQUIRE(parse(u8R"("\\\"")").string() == u8"\\\"");
+  }
+
+  TEST_CASE("parse string escaped with hex") {
+    char8_t s[] = { 0x00, 0x42, 0xff, 0x00 };
+
+    REQUIRE(parse(u8R"("\x00\x42\xff")").string() ==
+            u8string_view { s, 3 });
+  }
+
+  TEST_CASE("parse string escaped with oct") {
+    char8_t s[] = { 0, 042, 0377, 0 };
+
+    REQUIRE(parse(u8R"("\0\42\377")").string() ==
+            u8string_view { s, 3 });
+  }
+
+  TEST_CASE("parse string escaped may fail") {
+    REQUIRE(parse(u8R"("\x00\x4242\xff")").error());
+    REQUIRE(parse(u8R"("\0\4242\377")").error());
+  }
+
+  TEST_CASE("parse concatenated string") {
+    REQUIRE(parse(u8R"("foo" " bar")").string() == u8"foo bar");
   }
 }

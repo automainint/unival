@@ -298,6 +298,108 @@ namespace unival {
              *next };
   }
 
+  [[nodiscard]] auto
+  read_escaped_hex(optional<input_buffer> next) noexcept
+      -> tuple<string, optional<input_buffer>> {
+    next = std::get<1>(read_one(next, "xX"));
+    auto value = int64_t {};
+    tie(value, next) = parse_uint_internal(next, "", hex_base,
+                                           hex_digits, hex_values);
+    if (value < 0 || value > 0xff)
+      return {};
+    return { string { static_cast<char>(value) }, next };
+  }
+
+  [[nodiscard]] auto
+  read_escaped_oct(optional<input_buffer> next) noexcept
+      -> tuple<string, optional<input_buffer>> {
+    auto value = int64_t {};
+    tie(value, next) = parse_uint_internal(next, "", oct_base,
+                                           oct_digits, oct_values);
+    if (value < 0 || value > 0xff)
+      return {};
+    return { string { static_cast<char>(value) }, next };
+  }
+
+  [[nodiscard]] auto
+  read_escaped_special(optional<input_buffer> next) noexcept
+      -> tuple<string, optional<input_buffer>> {
+    auto last = next->read(1);
+    if (string_view { dec_digits }.find(last.string()) !=
+            string_view::npos ||
+        last.string() == "x")
+      return {};
+    return { last.string(), last };
+  }
+
+  [[nodiscard]] auto
+  read_escaped_char(optional<input_buffer> next) noexcept
+      -> tuple<string, optional<input_buffer>> {
+    auto [string, last] = read_escaped_hex(next);
+    if (last)
+      return { string, last };
+    tie(string, last) = read_escaped_oct(next);
+    if (last)
+      return { string, last };
+    return read_escaped_special(next);
+  }
+
+  [[nodiscard]] auto read_string_char(optional<input_buffer> next,
+                                      char stop) noexcept
+      -> tuple<string, optional<input_buffer>> {
+    if (!next)
+      return {};
+    auto last = next->read(1);
+    if (last.eof())
+      return {};
+    if (last.string() == "\\")
+      return read_escaped_char(last);
+    if (last.string() == string_view { &stop, 1 })
+      return {};
+    return { last.string(), last };
+  }
+
+  [[nodiscard]] auto read_escaped_until(optional<input_buffer> next,
+                                        char stop) noexcept
+      -> tuple<string, optional<input_buffer>> {
+    auto value = string {};
+    for (;;) {
+      auto [c, last] = read_string_char(next, stop);
+      if (!last)
+        break;
+      value += c;
+      next = last;
+    }
+    return { value, next };
+  }
+
+  [[nodiscard]] auto
+  parse_string(optional<input_buffer> next) noexcept
+      -> tuple<string, optional<input_buffer>> {
+    next = skip_whitespaces(next);
+    auto value = string {};
+    next = read_string(next, "\"");
+    tie(value, next) = read_escaped_until(next, '"');
+    next = read_string(next, "\"");
+    return { value, next };
+  }
+
+  [[nodiscard]] auto
+  parse_concat_strings(optional<input_buffer> buf) noexcept
+      -> parse_result {
+    auto [value, next] = parse_string(buf);
+    if (!next)
+      return { unival::_error() };
+    do {
+      auto [s, last] = parse_string(next);
+      if (!last)
+        break;
+      value += s;
+      next = last;
+    } while (true);
+    return { unival { value }, *next };
+  }
+
   [[nodiscard]] auto parse(optional<input_buffer> buf) noexcept
       -> parse_result {
     if (!buf)
@@ -339,6 +441,8 @@ namespace unival {
     if (auto res =
             parse_integer(buf, "", dec_base, dec_digits, dec_values);
         !res.value.error())
+      return res;
+    if (auto res = parse_concat_strings(buf); !res.value.error())
       return res;
     return { unival::_error() };
   }

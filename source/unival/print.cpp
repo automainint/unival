@@ -125,19 +125,27 @@ namespace unival {
 
   [[nodiscard]] auto print_string(bool status,
                                   string_view const &value,
-                                  fn_write const &write) noexcept
-      -> bool {
+                                  fn_write const &write,
+                                  mode_tag mode) noexcept -> bool {
     return bind(status, [&]() {
       auto ok = write("\"");
+      bool is_escaped = false;
       for (auto c : value) {
         if (c < u8'\x20' || c >= u8'\x7f') {
           ok = bind_write(ok, write, "\\x");
           ok = print_byte(ok, static_cast<int8_t>(c), write);
-          continue;
+          is_escaped = true;
+        } else {
+          if (c == '"' || c == '\\')
+            ok = bind_write(ok, write, "\\");
+          else if (is_escaped &&
+                   string_view { "0123456789abcdefABCDEF" }.find(c) !=
+                       string_view::npos)
+            ok = bind_write(ok, write,
+                            mode.is_pretty ? "\" \"" : "\"\"");
+          ok = bind_write(ok, write, { &c, 1 });
+          is_escaped = false;
         }
-        if (c == '"' || c == '\\')
-          ok = bind_write(ok, write, "\\");
-        ok = bind_write(ok, write, { &c, 1 });
       }
       return bind_write(ok, write, "\"");
     });
@@ -254,7 +262,7 @@ namespace unival {
         auto str = value.string().value();
         if (!mode.is_json && is_id_string(str))
           return print_id_string(true, as_string(str), write);
-        return print_string(true, as_string(str), write);
+        return print_string(true, as_string(str), write, mode);
       }
       if (value.bytes())
         return print_byte_array(true, value.bytes().value(), write,

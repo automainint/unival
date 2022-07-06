@@ -84,7 +84,14 @@ namespace unival::test {
   }
 
   TEST_CASE("print string unival with escape") {
-    REQUIRE(to_string(unival { "\"" }) == u8"\"\\\"\"");
+    REQUIRE(to_string(unival { "\"" }) == u8R"("\"")");
+  }
+
+  TEST_CASE("print string unival with escaped hex") {
+    REQUIRE(to_string(unival { "\x04\xaf"
+                               "42" }) == u8R"("\x04\xaf""42")");
+    REQUIRE(to_string(unival { "\x04\xaf"
+                               "af" }) == u8R"("\x04\xaf""af")");
   }
 
   TEST_CASE("print string can fail 1") {
@@ -212,6 +219,15 @@ namespace unival::test {
 
   TEST_CASE("pretty print empty") {
     REQUIRE(to_string(unival {}, pretty) == u8"{ }");
+  }
+
+  TEST_CASE("pretty print string unival with escaped hex") {
+    REQUIRE(to_string(unival { "\x04\xaf"
+                               "42" },
+                      pretty) == u8R"("\x04\xaf" "42")");
+    REQUIRE(to_string(unival { "\x04\xaf"
+                               "af" },
+                      pretty) == u8R"("\x04\xaf" "af")");
   }
 
   TEST_CASE("pretty print byte array empty") {
