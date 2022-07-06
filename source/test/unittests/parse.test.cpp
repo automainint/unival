@@ -148,7 +148,7 @@ namespace unival::test {
   }
 
   TEST_CASE("parse string escaped") {
-    REQUIRE(parse(u8R"("\\\"")").string() == u8"\\\"");
+    REQUIRE(parse(u8"\"\\\\\\\"\"").string() == u8"\\\"");
   }
 
   TEST_CASE("parse string escaped with hex") {
@@ -166,8 +166,8 @@ namespace unival::test {
   }
 
   TEST_CASE("parse string escaped may fail") {
-    REQUIRE(parse(u8R"("\x00\x4242\xff")").error());
-    REQUIRE(parse(u8R"("\0\4242\377")").error());
+    REQUIRE(parse(u8"\"\\x00\\x4242\\xff\"").error());
+    REQUIRE(parse(u8"\"\\0\\4242\\377\"").error());
   }
 
   TEST_CASE("parse concatenated string") {

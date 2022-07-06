@@ -84,7 +84,7 @@ namespace unival::test {
   }
 
   TEST_CASE("print string unival with escape") {
-    REQUIRE(to_string(unival { "\"" }) == u8R"("\"")");
+    REQUIRE(to_string(unival { "\"" }) == u8"\"\\\"\"");
   }
 
   TEST_CASE("print string unival with escaped hex") {
