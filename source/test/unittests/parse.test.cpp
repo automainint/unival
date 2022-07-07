@@ -6,7 +6,7 @@
 
 namespace unival::test {
   using namespace std::string_literals;
-  using std::u8string, std::min, std::u8string_view;
+  using std::u8string, std::min, std::u8string_view, std::equal;
 
   TEST_CASE("parse empty unival") {
     REQUIRE(parse([str = u8"{}"s, i = ptrdiff_t {}](
@@ -172,5 +172,46 @@ namespace unival::test {
 
   TEST_CASE("parse concatenated string") {
     REQUIRE(parse(u8R"("foo" " bar")").string() == u8"foo bar");
+  }
+
+  TEST_CASE("parse empty byte array") {
+    REQUIRE(parse(u8"<>") == unival { bytes {} });
+  }
+
+  TEST_CASE("parse 3-byte array") {
+    REQUIRE(parse(u8"<00 1f ff>") ==
+            unival { bytes { 0x00, 0x1f, -1 } });
+    REQUIRE(parse(u8"<00 1F FF>") ==
+            unival { bytes { 0x00, 0x1f, -1 } });
+  }
+
+  TEST_CASE("parse 3-byte array with spaces") {
+    REQUIRE(parse(u8" < 00 2a ff > ") ==
+            unival { bytes { 0x00, 0x2a, -1 } });
+  }
+
+  TEST_CASE("parse empty vector") {
+    REQUIRE(parse(u8"[]") == unival { vector {} });
+  }
+
+  TEST_CASE("parse 3-vector") {
+    REQUIRE(parse(u8"[ 1 2 3 ]") ==
+            unival { vector { unival { 1 }, unival { 2 },
+                              unival { 3 } } });
+    REQUIRE(parse(u8"[1 2 3]") ==
+            unival { vector { unival { 1 }, unival { 2 },
+                              unival { 3 } } });
+    REQUIRE(parse(u8"[ 1, 2, 3 ]") ==
+            unival { vector { unival { 1 }, unival { 2 },
+                              unival { 3 } } });
+    REQUIRE(parse(u8"[ 1; 2; 3 ]") ==
+            unival { vector { unival { 1 }, unival { 2 },
+                              unival { 3 } } });
+    REQUIRE(parse(u8"[ 1, 2, 3, ]") ==
+            unival { vector { unival { 1 }, unival { 2 },
+                              unival { 3 } } });
+    REQUIRE(parse(u8"[ 1; 2; 3; ]") ==
+            unival { vector { unival { 1 }, unival { 2 },
+                              unival { 3 } } });
   }
 }

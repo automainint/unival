@@ -158,8 +158,8 @@ namespace unival {
                                       int indent) noexcept -> bool {
     return bind(status, [&]() {
       if (value.empty())
-        return write(mode.is_pretty ? ":: { }" : "::{}");
-      auto ok = write(mode.is_pretty ? ":: {" : "::{");
+        return write(mode.is_pretty ? "< >" : "<>");
+      auto ok = write("<");
       for (ptrdiff_t i = 0, k = 0; i < value.size(); i++) {
         auto const b = value[i];
         if (k == 0 && mode.is_pretty) {
@@ -177,7 +177,7 @@ namespace unival {
         ok = bind_write(ok, write, "\n");
         ok = write_indent(ok, write, indent);
       }
-      return bind_write(ok, write, "}");
+      return bind_write(ok, write, ">");
     });
   }
 
@@ -216,28 +216,24 @@ namespace unival {
       auto ok = write("{");
       if (mode.is_pretty)
         ok = bind_write(ok, write, "\n");
-      bool first = true;
       auto i = ptrdiff_t {};
       for (auto const &key : value) {
-        if (mode.is_pretty) {
+        if (mode.is_pretty)
           ok = write_indent(ok, write, indent + 2);
-        } else if (!first) {
-          if (!mode.is_json)
-            ok = bind_write(ok, write, " ");
-        } else
-          first = false;
         ok = print_impl(ok, key, write, mode, indent + 2);
         ok = bind_write(ok, write, ":");
         if (mode.is_pretty)
           ok = bind_write(ok, write, " ");
         ok = print_impl(ok, value.get(key), write, mode, indent + 2);
-        if (mode.is_json) {
-          if (++i != value.size())
+        if (++i != value.size()) {
+          if (mode.is_json)
             ok = bind_write(ok, write, ",");
-          if (mode.is_pretty)
-            ok = bind_write(ok, write, "\n");
-        } else if (mode.is_pretty)
-          ok = bind_write(ok, write, ";\n");
+          else
+            ok = bind_write(ok, write, ";");
+        } else if (mode.is_pretty && !mode.is_json)
+          ok = bind_write(ok, write, ";");
+        if (mode.is_pretty)
+          ok = bind_write(ok, write, "\n");
       }
       if (mode.is_pretty)
         ok = write_indent(ok, write, indent);

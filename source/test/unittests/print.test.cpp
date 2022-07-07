@@ -120,12 +120,12 @@ namespace unival::test {
   }
 
   TEST_CASE("print empty byte array") {
-    REQUIRE(to_string(unival { bytes {} }) == u8"::{}");
+    REQUIRE(to_string(unival { bytes {} }) == u8"<>");
   }
 
   TEST_CASE("print byte array") {
     REQUIRE(to_string(unival { bytes { 1, 2, 3, 4, 0x1f, -8 } }) ==
-            u8"::{01 02 03 04 1f f8}");
+            u8"<01 02 03 04 1f f8>");
   }
 
   TEST_CASE("print byte may fail") {
@@ -195,7 +195,7 @@ namespace unival::test {
                 composite { { unival { 42 }, unival { 43 } },
                             { unival { 44 }, unival { 45 } },
                             { unival { 46 }, unival { 47 } } } }) ==
-            u8"{42:43 44:45 46:47}");
+            u8"{42:43;44:45;46:47}");
   }
 
   TEST_CASE("print composite may fail") {
@@ -231,14 +231,14 @@ namespace unival::test {
   }
 
   TEST_CASE("pretty print byte array empty") {
-    REQUIRE(to_string(unival { bytes {} }, pretty) == u8":: { }");
+    REQUIRE(to_string(unival { bytes {} }, pretty) == u8"< >");
   }
 
   TEST_CASE("pretty print byte array") {
     REQUIRE(to_string(unival { bytes { 1, 2, 3, 4, 0x1f, -8 } },
-                      pretty) == u8":: {\n"
+                      pretty) == u8"<\n"
                                  "  01 02 03 04 1f f8\n"
-                                 "}");
+                                 ">");
   }
 
   TEST_CASE("pretty print big byte array") {
@@ -249,10 +249,10 @@ namespace unival::test {
                           0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b,
                           0x1c, 0x1d, 0x1e, 0x1f } },
                       pretty) ==
-            u8":: {\n"
+            u8"<\n"
             "  00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f\n"
             "  10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f\n"
-            "}");
+            ">");
   }
 
   TEST_CASE("pretty print empty vector") {
@@ -312,7 +312,7 @@ namespace unival::test {
                                      unival { 1 },
                                      unival { 2 },
                                  } } } } } }) ==
-            u8"{42:43 44:::{01 02 03} 45:[1,2,3] 46:{1:2}}");
+            u8"{42:43;44:<01 02 03>;45:[1,2,3];46:{1:2}}");
   }
 
   TEST_CASE("pretty print nested") {
@@ -329,9 +329,9 @@ namespace unival::test {
                                        } } } } } },
                   pretty) == u8"{\n"
                              "  42: 43;\n"
-                             "  44: :: {\n"
+                             "  44: <\n"
                              "    01 02 03\n"
-                             "  };\n"
+                             "  >;\n"
                              "  45: [\n"
                              "    1,\n"
                              "    2,\n"

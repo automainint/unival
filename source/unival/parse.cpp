@@ -41,6 +41,14 @@ namespace unival {
 
   constexpr static auto or_eof = or_eof_tag { true };
 
+  struct parse_result {
+    unival value;
+    input_buffer in;
+  };
+
+  [[nodiscard]] auto parse(optional<input_buffer> buf) noexcept
+      -> parse_result;
+
   [[nodiscard]] auto
   skip_until(optional<input_buffer> buf, string_view s,
              or_eof_tag tag = or_eof_tag { false }) noexcept
@@ -125,11 +133,6 @@ namespace unival {
       return { s[0], next };
     return { '\0', nullopt };
   }
-
-  struct parse_result {
-    unival value;
-    input_buffer in;
-  };
 
   [[nodiscard]] auto parse_empty(optional<input_buffer> buf) noexcept
       -> parse_result {
@@ -390,18 +393,67 @@ namespace unival {
     auto [value, next] = parse_string(buf);
     if (!next)
       return { unival::_error() };
-    do {
+    for (;;) {
       auto [s, last] = parse_string(next);
       if (!last)
         break;
       value += s;
       next = last;
-    } while (true);
+    }
     return { unival { value }, *next };
   }
 
-  [[nodiscard]] auto parse(optional<input_buffer> buf) noexcept
+  [[nodiscard]] auto
+  parse_byte_array(optional<input_buffer> next) noexcept
       -> parse_result {
+    next = skip_whitespaces(next);
+    next = read_string(next, "<");
+    auto bytes = std::vector<int8_t> {};
+    for (;;) {
+      next = skip_whitespaces(next);
+      auto [value, last] = parse_uint_internal(
+          next, "", hex_base, hex_digits, hex_values);
+      if (!last)
+        break;
+      if (value < 0 || value > 0xff)
+        return { unival::_error() };
+      bytes.emplace_back(static_cast<int8_t>(value));
+      next = last;
+    }
+    next = skip_whitespaces(next);
+    next = read_string(next, ">");
+    if (!next)
+      return { unival::_error() };
+    return { unival { bytes }, *next };
+  }
+
+  [[nodiscard]] auto
+  parse_vector(optional<input_buffer> next) noexcept -> parse_result {
+    next = skip_whitespaces(next);
+    next = read_string(next, "[");
+    auto value = vector {};
+    for (;;) {
+      next = skip_whitespaces(next);
+      auto res = parse(next);
+      if (res.value.error())
+        break;
+      next = res.in;
+      value.emplace_back(res.value);
+      next = skip_whitespaces(next);
+      auto last = read_string(next, ",");
+      if (last)
+        next = skip_whitespaces(last);
+      else if (last = read_string(next, ";"); last)
+        next = skip_whitespaces(last);
+    }
+    next = skip_whitespaces(next);
+    next = read_string(next, "]");
+    if (!next)
+      return { unival::_error() };
+    return { unival { value }, *next };
+  }
+
+  auto parse(optional<input_buffer> buf) noexcept -> parse_result {
     if (!buf)
       return { unival::_error() };
     if (auto res = parse_empty(buf); !res.value.error())
@@ -443,6 +495,10 @@ namespace unival {
         !res.value.error())
       return res;
     if (auto res = parse_concat_strings(buf); !res.value.error())
+      return res;
+    if (auto res = parse_byte_array(buf); !res.value.error())
+      return res;
+    if (auto res = parse_vector(buf); !res.value.error())
       return res;
     return { unival::_error() };
   }
