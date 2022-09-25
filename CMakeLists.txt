@@ -4,51 +4,55 @@ option(UNIVAL_ENABLE_TESTING "Enable testing" ON)
 
 set(UNIVAL_PROJECT unival)
 set(UNIVAL_LIBRARY unival)
-set(UNIVAL_TEST unival-test)
-set(UNIVAL_UNITTESTS unival-unittests)
+set(UNIVAL_TEST unival_test)
 set(UNIVAL_TARGETS unival-targets)
 
 if(NOT DEFINED CMAKE_BUILD_PARALLEL_LEVEL)
-  set(CMAKE_BUILD_PARALLEL_LEVEL 3)
+  set(CMAKE_BUILD_PARALLEL_LEVEL 4)
 endif()
 
 project(
   ${UNIVAL_PROJECT}
   VERSION 0.1.1
   DESCRIPTION "Universal data container"
-  LANGUAGES CXX)
+  LANGUAGES C)
+
+include(FetchContent)
+
+find_package(kit QUIET)
+
+if(NOT kit_FOUND)
+  FetchContent_Declare(
+    kit
+    GIT_REPOSITORY https://github.com/automainint/kit.git
+    GIT_TAG dev)
+  set(KIT_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+  FetchContent_MakeAvailable(kit)
+endif()
 
 add_library(${UNIVAL_LIBRARY} STATIC)
 add_library(${UNIVAL_PROJECT}::${UNIVAL_LIBRARY} ALIAS ${UNIVAL_LIBRARY})
 target_include_directories(
   ${UNIVAL_LIBRARY} INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/source>)
-target_compile_features(${UNIVAL_LIBRARY} PUBLIC cxx_std_20)
+target_compile_features(${UNIVAL_LIBRARY} PUBLIC c_std_11)
+target_link_libraries(${UNIVAL_LIBRARY} PUBLIC kit::kit)
+
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+  target_compile_options(${UNIVAL_LIBRARY} PUBLIC -pedantic -Wall -Werror)
+endif()
 
 enable_testing()
 
 if(UNIVAL_ENABLE_TESTING)
-  find_package(Catch2 QUIET)
-
-  if(NOT Catch2_FOUND)
-    include(FetchContent)
-
-    FetchContent_Declare(
-      Catch2
-      GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-      GIT_TAG v2.13.9)
-
-    FetchContent_MakeAvailable(Catch2)
-  endif()
+  find_package(Threads REQUIRED)
 
   add_executable(${UNIVAL_TEST})
+  add_executable(${UNIVAL_PROJECT}::${UNIVAL_TEST} ALIAS ${UNIVAL_TEST})
+  target_compile_features(${UNIVAL_TEST} PRIVATE c_std_11)
+  target_link_libraries(${UNIVAL_TEST} PRIVATE ${UNIVAL_LIBRARY} kit::kit_test)
 
-  target_link_libraries(
-    ${UNIVAL_TEST}
-    PRIVATE
-    ${UNIVAL_LIBRARY} Catch2::Catch2)
-
-  if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(
       ${UNIVAL_LIBRARY} PUBLIC
       -fsanitize=undefined,address
@@ -60,13 +64,13 @@ if(UNIVAL_ENABLE_TESTING)
   endif()
 
   add_test(
-    NAME ${UNIVAL_UNITTESTS}
-    COMMAND ${UNIVAL_TEST})
+    NAME ${UNIVAL_LIBRARY}_unittests
+    COMMAND ${UNIVAL_TEST} --no-carriage-return)
 
   set_tests_properties(
-    ${UNIVAL_UNITTESTS}
+    ${UNIVAL_LIBRARY}_unittests
     PROPERTIES
-    TIMEOUT "15")
+    TIMEOUT "120")
 endif()
 
 add_subdirectory(source)
@@ -91,7 +95,7 @@ unset(path_)
 unset(dir_)
 
 install(
-  TARGETS ${UNIVAL_LIBRARY}
+  TARGETS ${UNIVAL_LIBRARY} ${UNIVAL_TEST_LIBRARY}
   EXPORT ${UNIVAL_TARGETS}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -113,7 +117,7 @@ include(CMakePackageConfigHelpers)
 string(TOLOWER ${PROJECT_NAME} project_lower_)
 
 configure_package_config_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/config.cmake.in
   "${CMAKE_CURRENT_BINARY_DIR}/${project_lower_}-config.cmake"
   INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 

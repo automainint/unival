@@ -1,2 +1,1 @@
 # unival
-Universal data container.
